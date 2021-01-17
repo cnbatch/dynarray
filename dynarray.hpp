@@ -771,7 +771,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename Ty>
-	inline typename dynarray<T, _Allocator>::size_type dynarray<T, _Allocator>::expand_list(std::initializer_list<Ty> init)
+	inline typename dynarray<T, _Allocator>::size_type
+	dynarray<T, _Allocator>::expand_list(std::initializer_list<Ty> init)
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 		{
@@ -788,7 +789,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline typename dynarray<T, _Allocator>::size_type dynarray<T, _Allocator>::expand_counts(size_type count, Args && ...args)
+	inline typename dynarray<T, _Allocator>::size_type
+	dynarray<T, _Allocator>::expand_counts(size_type count, Args && ...args)
 	{
 		if constexpr (std::is_same_v<T, internal_value_type> || sizeof...(args) == 0)
 			return count;
@@ -798,7 +800,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline typename dynarray<T, _Allocator>::contiguous_allocator_type dynarray<T, _Allocator>::expand_allocator(const allocator_type &_allocator, Args && ...args)
+	inline typename dynarray<T, _Allocator>::contiguous_allocator_type
+	dynarray<T, _Allocator>::expand_allocator(const allocator_type &_allocator, Args && ...args)
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 			return _allocator;
@@ -810,7 +813,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename Skip, typename ...Args>
-	inline typename dynarray<T, _Allocator>::contiguous_allocator_type dynarray<T, _Allocator>::expand_allocators(const Skip &skip, const allocator_type &_allocator, Args && ...args)
+	inline typename dynarray<T, _Allocator>::contiguous_allocator_type
+	dynarray<T, _Allocator>::expand_allocators(const Skip &skip, const allocator_type &_allocator, Args && ...args)
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 			return _allocator;
@@ -1014,7 +1018,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename _Alloc_t, typename, typename ...Args>
-	inline void dynarray<T, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count, _Alloc_t &&other_allocator, Args&& ... args)
+	inline void dynarray<T, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count,
+		                                                _Alloc_t &&other_allocator, Args&& ... args)
 	{
 		entire_array_data = nullptr;	// always nullptr in nested-dynarray
 		array_allocator = other_allocator;
@@ -1259,7 +1264,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline void dynarray<T, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other, const allocator_type &other_allocator, Args&& ... args)
+	inline void dynarray<T, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other,
+		                                            const allocator_type &other_allocator, Args&& ... args)
 	{
 		array_allocator = other_allocator;
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
@@ -1394,7 +1400,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::reference dynarray<T, _Allocator>::at(size_type pos)
+	inline typename dynarray<T, _Allocator>::reference
+	dynarray<T, _Allocator>::at(size_type pos)
 	{
 		if (pos >= size())
 			throw std::out_of_range("out of range, incorrect position");
@@ -1402,7 +1409,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::const_reference dynarray<T, _Allocator>::at(size_type pos) const
+	inline typename dynarray<T, _Allocator>::const_reference
+	dynarray<T, _Allocator>::at(size_type pos) const
 	{
 		if (pos >= size())
 			throw std::out_of_range("out of range, incorrect position");
@@ -1410,7 +1418,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::reference dynarray<T, _Allocator>::operator[](size_type pos)
+	inline typename dynarray<T, _Allocator>::reference
+	dynarray<T, _Allocator>::operator[](size_type pos)
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 			return *(this_level_array_head + pos);
@@ -1419,7 +1428,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline constexpr typename dynarray<T, _Allocator>::const_reference dynarray<T, _Allocator>::operator[](size_type pos) const
+	inline constexpr typename dynarray<T, _Allocator>::const_reference
+	dynarray<T, _Allocator>::operator[](size_type pos) const
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 			return *(this_level_array_head + pos);
@@ -1428,7 +1438,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::reference dynarray<T, _Allocator>::back()
+	inline typename dynarray<T, _Allocator>::reference
+	dynarray<T, _Allocator>::back()
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 			return *(this_level_array_tail);
@@ -1437,7 +1448,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::const_reference dynarray<T, _Allocator>::back() const
+	inline typename dynarray<T, _Allocator>::const_reference
+	dynarray<T, _Allocator>::back() const
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 			return *(this_level_array_tail);
