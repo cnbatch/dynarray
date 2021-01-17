@@ -2,7 +2,7 @@
 [English Version](README.md)
 [简中版介绍在这里](README_zh_CN.md)
 
-這是個 header-only 的庫，爲 C++ 提供 C99 VLA 的類似用法
+這是個 header-only 的庫，爲 C++ 提供 C99 VLA 的類似用法。不必在 C++ 中使用編譯器提供的 VLA 擴展功能。
 
 ## 依賴項
 
@@ -184,7 +184,7 @@ vla_array_b = vla_array_a;
 
 	`vla_array[1].size() == 3`
 
-	`vla_array[0].size() == 2`
+	`vla_array[2].size() == 2`
 
 
 6. 使用疊代器

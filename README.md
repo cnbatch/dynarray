@@ -2,7 +2,7 @@
 [简中版介绍在这里](README_zh_CN.md)
 [繁中版介紹在這裏](README_zh_HK.md)
 
-A header-only library, providing C99 VLA-like class for C++
+A header-only library, providing C99 VLA-like class for C++. The VLA extension provide by compiler is not required.
 
 ## Depencencies
 
@@ -188,7 +188,7 @@ vla_array_b = vla_array_a;
 
 	`vla_array[1].size() == 3`
 
-	`vla_array[0].size() == 2`
+	`vla_array[2].size() == 2`
 
 
 6. Iterator
