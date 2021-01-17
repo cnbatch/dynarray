@@ -260,7 +260,7 @@ vla::dynarray<vla::dynarray<int, std::allocator>, your_allocator> my_array(200, 
 																		   100, std_alloc);
 ```
 
-## The behaviour of `operator=`
+## Behaviour of `operator=`
 
 Since `vla::dynarray` is permitted to create zero-size array, the behaviour of using `operator=` on the outter-most layer will not the same as `operator=` using in the inner layer.
 
