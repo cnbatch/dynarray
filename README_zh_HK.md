@@ -1,28 +1,24 @@
 # VLA for C++: dynarray
+[English Version](README.md)
 [简中版介绍在这里](README_zh_CN.md)
-[繁中版介紹在這裏](README_zh_HK.md)
 
-A header-only library, providing C99 VLA-like class for C++
+這是個 header-only 的庫，爲 C++ 提供 C99 VLA 的類似用法
 
-## Depencencies
+## 依賴項
 
 C++ 17
 
-C++ Standard Library
+C++ 標準庫
 
-# Purpose of this project
+# 項目目的
 
-C Language provided VLA since C99. This is my favourite feature in C. A similar library was almost became a part of C++14 standard: [N3662](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3662.html) but it's got removed before release year of C++14.
+C 語言自 C99 開始提供了 VLA，這是我最喜歡的 C 語言特性。C++ 曾經亦有類似的庫進入 C++14 標準：[N3662](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3662.html)，祇不過很快就消失了。C++14 後再有提案[P0785R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0785r0.html)，但仍未成爲標準的一部分。
 
-A proposal [P0785R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0785r0.html) was proposed after C++14, but it's still not a part of C++ standard.
+VLA 最大的特點是，可以在連續的記憶體空間內使用動態定義的數組（多維數組亦是這樣），並且定義後該數組長度不變。`vector` 雖然可以做到相似的功能，例如使用自訂的 `allocator` 連續分配空間，但是對數組長度不再改變就沒甚麼好辦法，祇能寫個提醒告知後續使用者不要用 `push_back` 或 `emplace_back`。
 
-The most obvious feature of VLA is, a contiguous memory space will be allocated for a dynamic defined array, including multi-dimensional array. The size of this array will not (and cannot) be changed after definition.
+由於 `std:dynarray` 已經在C++14成爲標準前刪除了，所以這裡我做了一個 `std::dynarray` 的擴充版本，爲其提供多維數組（嵌套數組）功能。修改後的 `dynarray` 介於 VLA 和 `vector` 之間，既能保持像那樣 VLA 連續分配空間，亦能保持類似 `vector` 那樣使用 C++ 疊代器。
 
-`vector` can also do the same thing for multi-dimensional array, if use it with custom allocator to allocate contiguous memory space. But if the requirement is ‘I don't want to change the size after definition’, almost nothing we can do for it. The only thing we can do is, write a note or comment to inform everyone ‘Do not use `push_back` or `emplace_back`’.
-
-Since `std:dynarray` was removed before C++14 release, I've modified `std::dynarray` and extended it to provide multi-dimensional array (nested-array) support. The behaviour of modified `dynarray` is designed between VLA and `vector`. It will allocates a contiguous memory space as VLA does, and uses C++ iterator as `vector` does.
-
-# How to use
+# 使用方法
 
 ```C++
 #include <iostream>
@@ -39,42 +35,42 @@ int main()
 }
 ```
 
-## Create a one-dimensional array
+## 創建一維數組
 
-1. Create an array with variable
+1. 用變量大小創建數組
 ```C++
 int count = 100;
 vla::dynarray<int> vla_array(count); 
 ```
-Equivalent to
+相當於
 ```C
 int count = 100;
 int vla_array[count];
 memset(vla_array, 0, sizeof vla_array);
 ```
 
-2. Create an array with initial value
+2. 創建數組時指定初始值
 ```C++
 int count = 100;
-vla::dynarray<int> vla_array(count, 256); // initial value 256
+vla::dynarray<int> vla_array(count, 256); 
 ```
-Equivalent to
+相當於
 ```C
 int count = 100;
 int vla_array[count];
 memset(vla_array, 256, sizeof vla_array);
 ```
 
-3. Create a zero-size array
+3. 創建零大小數組
 ```C++
 vla::dynarray<int> vla_array;
 ```
-or
+或
 ```C++
 vla::dynarray<int> vla_array(0); 
 ```
 
-4. Initialise current dynarray or replace current dynarray with another dynarray
+4. 用另一個數組初始化或者替換當前數組
 ```C++
 vla::dynarray<int> vla_array(vla::dynarray<int>(100, 256));
 ```
@@ -88,7 +84,7 @@ vla::dynarray<int> vla_array_b;
 vla_array_b = vla_array_a;
 ```
 
-5. Initialization list
+5. 使用初始化列表
 ```C++
 vla::dynarray<int> vla_array = {2, 4, 8, 16};
 ```
@@ -97,7 +93,7 @@ vla::dynarray<int> vla_array;
 vla_array = {2, 4, 8, 16};
 ```
 
-6. Iterator
+6. 使用疊代器
 ```C++
 int raw_array[100] = {};
 vla::dynarray<int> vla_array(std::begin(raw_array), std::end(raw_array));
@@ -107,52 +103,52 @@ vla::dynarray<int> vla_array_a(100);
 vla::dynarray<int> vla_array_b(vla_array_a.begin() + 20, vla_array_a.end());
 ```
 
-## Create a 2D array
-1.  Create an array with variable
+## 創建二維數組
+1. 用變量大小創建數組
 ```C++
 int x = 100, y = 200;
 vla::dynarray<vla::dynarray<int>> vla_array(x, y); 
 ```
-Equivalent to
+相當於
 ```C
 int x = 100, y = 200;
 int vla_array[x][y];
 memset(vla_array, 0, sizeof vla_array);
 ```
 
-2. Create an array with initial value
+2. 創建數組時指定初始值
 ```C++
 int x = 100, y = 200;
-vla::dynarray<vla::dynarray<int>> vla_array(x, y, 256); 
+vla::dynarray<vla::dynarray<int>> vla_array(x, y, 256); // 初始值256
 ```
-Equivalent to
+相當於
 ```C
 int x = 100, y = 200;
 int vla_array[x][y];
 memset(vla_array, 256, sizeof vla_array);
 ```
 
-3. Create a zero-size array
+3. 創建零大小數組
 
-As long as the number of parameters is less than the actual dimension, or one of the size is set as zero, a zero-size array will be created.
+祇要給出的參數個數少於實際維度，或者維度參數中其中一個爲零，都可以創建零大小數組
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array;
 ```
-or
+或
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(0); 
 ```
-or
+或
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(30, 0); 
 ```
-or
+或
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(0, 5); 
 ```
 
-4. Initialise current dynarray or replace current dynarray with another dynarray
+4. 用另一個數組初始化或者替换當前數組
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(vla::dynarray<vla::dynarray<int>>(100, 200));
 ```
@@ -166,21 +162,21 @@ vla::dynarray<vla::dynarray<int>> vla_array_b;
 vla_array_b = vla_array_a;
 ```
 
-5. Initialization list
-	- create 3 × 3 array
+5. 使用初始化列表
+	- 創建 3 × 3 數組
 	```C++
 	vla::dynarray<vla::dynarray<int>> array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
 	```
-	- create 3 × 3 array
+	- 創建 3 × 3 數組
 	```C++
 	vla::dynarray<vla::dynarray<int>> array33;
 	array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
 	```
-	- create a variable-length array
+	- 創建不定長度大小數組
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array = { {10, 100, 1000}, {1, 3, 5}, {0, 3} };
 	```
-	In this example:
+	在這個例子中
 
 	`vla_array.size() == 3`
 
@@ -191,17 +187,17 @@ vla_array_b = vla_array_a;
 	`vla_array[0].size() == 2`
 
 
-6. Iterator
+6. 使用疊代器
 
-	The useage is similar with one-dimensional array. Examples are omitted here.
+	使用方法類似於一維數組，此處舉例省略。
 
-## Create multi-dimensional array
+## 創建多維數組
 
-The useage is similar with one-dimensional array and 2D array. Examples are omitted here.
+類似於創建二維數組，此處省略。
 
-Allow me to remind you again: as long as the number of parameters is less than the actual dimension, or one of the size is set as zero, a zero-size array will be created.
+再次提醒，祇要給出的參數個數少於實際維度，或者維度參數中其中一個爲零，就會創造出零大小數組。
 
-All of these are zero-size array:
+以下均爲零大小數組：
 
 ```C++
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array;
@@ -210,34 +206,33 @@ vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_b(vla_array_a);
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_c(100, 200);
 ```
 
-## Use a custom allocator
+## 使用自訂分配器
 
-`vla::dynarray` uses `std::allocator` by default. You will need to use your own allocator if you want to let `vla::dynarray` allocate memory on stack.
+`vla::dynarray` 預設使用 `std::allocator`。如果希望 `vla::dynarray` 在棧上分配，那麼就需要您自己寫一個分配器。
 
-The usage of allocator in  `vla::dynarray` is slightly different with container of std.
+`vla::dynarray` 的分配器用法稍稍不同於標準庫的容器。
 
-Assume you have an allocator as below
+例如你有一個分配器如下
 
 ```C++
 template<typename T>
 class your_allocator { /* ...... */ };
 ```
 
-When we're using std container, allocator will be used like this: place `your_allocator<T>` in the angle brackets.
+對於標準庫容器，使用起來是這樣的，尖括號內傳遞 `your_allocator<T>`
 
 ```C++
 your_allocator<int> my_alloc(/* sth */);
 std::vector<int, your_allocator<int>> my_vec(100, my_alloc);
 ```
 
-But `vla::dynarray` is not the same as above. You should place your template name `your_allocator` in the angle brackets.
-
+但 `vla::dynarray` 用起來不一樣，尖括號內傳遞模板名 `your_allocator`
 ```C++
 your_allocator<int> my_alloc(/* sth */);
 vla::dynarray<int, your_allocator> my_array(100, my_alloc);
 ```
 
-It would be much more verbose for multi-dimensional array
+多維數組會比較繁瑣
 
 ```C++
 your_allocator<int> my_alloc(/* sth */);
@@ -249,7 +244,7 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array(200, 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
 ```
 
-Note: all of the allocators must come from the same source (template, class) or dynarray will not be compiled. **Incorrect Example:**
+注意事項：所有分配器來源都必須相同，否則會無法編譯。以下是**錯誤例子**
 
 ```C++
 std::allocator<int> std_alloc(/* sth */);
@@ -260,13 +255,13 @@ vla::dynarray<vla::dynarray<int, std::allocator>, your_allocator> my_array(200, 
 																		   100, std_alloc);
 ```
 
-## The behaviour of `operator=`
+## `operator=` 的行爲
 
-Since `vla::dynarray` is permitted to create zero-size array, the behaviour of using `operator=` on the outter-most layer will not the same as `operator=` using in the inner layer.
+由於 `vla::dynarray` 允許創建零大小數組，因此在最外層使用 `operator=` 出現的行爲會不同於內層的行爲。
 
-Using `vla::dynarray` on the outter-most layer will get copy a new array and replace the left-side `vla::dynarray` itself:
+對最外層 `vla::dynarray` 使用 operator= 會複製並替換 `vla::dynarray` 自身：
 
-* Example 1
+* 示例1
 
 ```C++
 vla::dynarray<int> vla_array;
@@ -274,7 +269,7 @@ vla::dynarray<int> vla_array_2(5, 10);
 vla_array = vla_array_2;	// vla_array becomes a copy of vla_array_2
 ```
 
-* Example 2
+* 示例2
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
@@ -282,11 +277,11 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 10);
 vla_array = vla_array_2;	// vla_array becomes a copy of vla_array_2, original array (3 × 3) erased.
 ```
 
-* Example 3
+* 示例3
 
-Using `operator=` in the inner layer of `vla::dynarray` will only assign values to the left-side array. The size will not be changed.
+對內層 `vla::dynarray` 使用 `operator=` 祇會對底層數據做賦值操作，不改變 size。
 
-If the size of right-side array is smaller than left-size's, then only some of the left-side elements will be filled.
+如果等號右側數組的大小比左側的小，那麼就會祇填充左側數組的部分元素。
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
@@ -345,7 +340,7 @@ vla_array_2[0] = vla_array[0];
 |[1][y]| 5 | 5 | 5 |
 |[2][y]| 5 | 5 | 5 |
 
-## Other APIs
+## 其它接口
 1. `at(n)`
 	```C++
 	vla::dynarray<int> vla_array(5, 10);
@@ -375,9 +370,7 @@ vla_array_2[0] = vla_array[0];
 	vla::dynarray<int> vla_array(5, 10);
 	int *raw_array = vla_array.data();
 	```
-	
-	`data()` will return a first level pointer even if the array is multi-dimensional array. The pointer is pointing to a contiguous memory space.
-
+	即使是多維數組，`data()`獲得的依然是單層指標，指向一片連續的記憶體空間
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array(5, 5, 10);
 	int *raw_array = vla_array.data();
@@ -403,7 +396,7 @@ vla_array_2[0] = vla_array[0];
 
 9. `max_size()`
 
-	Returns the maximum number of elements the container (dynarray) is able to hold.
+	dynarray 最大承載量
 
 	```C++
 	vla::dynarray<int> vla_array(5, 10);
@@ -428,7 +421,7 @@ vla_array_2[0] = vla_array[0];
 	vla_array.fill(256);	// all elements in all dimension have value 256
 	```
 
-## Iterators
+## 疊代器
 * begin()
 * cbegin()
 * end()
@@ -439,28 +432,27 @@ vla_array_2[0] = vla_array[0];
 * crend()
 
 
-# Internal Design
+# 內部設計
+對於多層 dynarray，先由最外層 dynarray 在記憶體中分配一塊連續的數組空間，大小由用戶提供。然後再分配內部 dynarray 管理節點，這些內部各 dynarray 擁有頭尾指標，按照順序、大小指向正確的位置。
 
-For a multilayer dynarray, allocates a contiguous memory space on the outter-most layer first. The size is provided by user. And then allocate each level's management nodes inside. These `dynarray`s have head/tail pointers pointing to the right place, according to the sizes and sequences.
+單層 dynarray 是多層 dynarray 的簡化版。
 
-Single-layer `dynarray` is a simplified version of multiple dynarray.
+![單層dynarray](images/vla_dynarray_single.png)
 
-![single-dynarray](images/vla_dynarray_single.png)
+![多層dynarray](images/vla_dynarray_nested.png)
 
-![multi-dynarray](images/vla_dynarray_nested.png)
-
-## The most important line of the code
+## 最關鍵的一行代碼
 
 ```C++
 friend class dynarray<dynarray<T, _Allocator>, _Allocator>;
 ```
 
-Extremely simple. No lying. No mystery.
+極爲簡單，真的就一行，毫無神秘感。
 
-Thanks for `friend`, the outter layer can access any data of internal layer, including private members.
+這樣就可以使得外層 dynarray 可以存取內層 dynarray 內的任意數據，包括私有成員。
 
-It's still safe. The users outside this library are still not able to use private members.
+外部用戶一樣無法存取私有成員。
 
 # License
 
-The code in this repository is licensed under the [BSD-3-Clause License](LICENSE)
+在此存儲庫中使用的代碼均遵循 [BSD-3-Clause License](LICENSE)
