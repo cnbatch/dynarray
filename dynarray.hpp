@@ -499,7 +499,9 @@ namespace vla
 		 * 
 		 * For everyone's convenience, calling data() on an empty container will return nullptr.
 		 *
-		 * @return Pointer to the innermost underlying element storage. For non-empty containers, the returned pointer compares equal to the address of the first element.
+		 * @return Pointer to the innermost underlying element storage.
+		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
+		 * 
 		*/
 		internal_pointer_type data() noexcept { return this_level_array_head; }
 
@@ -508,7 +510,8 @@ namespace vla
 		 * 
 		 * For everyone's convenience, calling data() on an empty container will return nullptr.
 		 *
-		 * @return Const pointer to the innermost underlying element storage. For non-empty containers, the returned pointer compares equal to the address of the first element.
+		 * @return Const pointer to the innermost underlying element storage.
+		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
 		const internal_pointer_type data() const noexcept { return this_level_array_head; }
 
@@ -517,7 +520,8 @@ namespace vla
 		 * 
 		 * For everyone's convenience, calling data() on an empty container will return nullptr.
 		 *
-		 * @return Pointer to the underlying element storage. For non-empty containers, the returned pointer compares equal to the address of the first element.
+		 * @return Pointer to the underlying element storage.
+		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
 		pointer get() noexcept { return current_dimension_array_data; }
 
@@ -526,7 +530,8 @@ namespace vla
 		 * 
 		 * For everyone's convenience, calling data() on an empty container will return nullptr.
 		 *
-		 * @return Const pointer to the underlying element storage. For non-empty containers, the returned pointer compares equal to the address of the first element.
+		 * @return Const pointer to the underlying element storage.
+		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
 		const pointer get() const noexcept { return current_dimension_array_data; }
 
@@ -685,52 +690,6 @@ namespace vla
 
 	private:
 
-		//dynarray(internal_pointer_type starting_address, size_type count)
-		//{
-		//	initialise();
-		//	allocate_array(starting_address, count);
-		//}
-
-		//template<typename ...Args>
-		//dynarray(internal_pointer_type starting_address, size_type count, Args&& ... args)
-		//{
-		//	initialise();
-		//	allocate_array(starting_address, count, std::forward<Args>(args)...);
-		//}
-
-		//dynarray(internal_pointer_type starting_address, const allocator_type &other_allocator, size_type count)
-		//{
-		//	initialise(other_allocator);
-		//	allocate_array(starting_address, count);
-		//}
-
-		//template<typename ...Args>
-		//dynarray(internal_pointer_type starting_address, const allocator_type &other_allocator, size_type count, Args&& ... args)
-		//{
-		//	initialise(other_allocator);
-		//	allocate_array(starting_address, other_allocator, count, std::forward<Args>(args)...);
-		//}
-
-		//dynarray(internal_pointer_type starting_address, const dynarray &other)
-		//{
-		//	initialise();
-		//	copy_array(starting_address, other);
-		//}
-
-		//template<typename ...Args>
-		//dynarray(internal_pointer_type starting_address, const dynarray &other, const allocator_type &other_allocator, Args&& ... args)
-		//{
-		//	initialise(other_allocator);
-		//	copy_array(starting_address, other, other_allocator, std::forward<Args>(args)...);
-		//}
-
-		//template<typename Ty>
-		//dynarray(internal_pointer_type starting_address, std::initializer_list<Ty> input_list)
-		//{
-		//	initialise();
-		//	allocate_array(starting_address, input_list);
-		//}
-
 		allocator_type array_allocator;
 		contiguous_allocator_type contiguous_allocator;
 
@@ -808,7 +767,6 @@ namespace vla
 		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list);
 
 		void move_array(dynarray &other);
-
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -1044,7 +1002,7 @@ namespace vla
 			for (size_type i = 0; i < current_dimension_array_size; ++i)
 			{
 				internal_pointer_type starting_address = entire_array_data + i * each_block_size;
-				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i/*, contiguous_allocator*/);
+				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
 				(current_dimension_array_data + i)->allocate_array(starting_address, std::forward<Args>(args)...);
 			}

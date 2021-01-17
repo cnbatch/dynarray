@@ -391,7 +391,7 @@ vla_array_2[0] = vla_array[0];
 8. `size()`
 	```C++
 	vla::dynarray<int> vla_array(5, 10);
-	int array_size = vla_array.size();  // array_size == 5
+	std::size_t array_size = vla_array.size();  // array_size == 5
 	```
 
 9. `max_size()`
@@ -400,7 +400,7 @@ vla_array_2[0] = vla_array[0];
 
 	```C++
 	vla::dynarray<int> vla_array(5, 10);
-	int max_size = vla_array.max_size();  // std::numeric_limits<std::ptrdiff_t>::max()
+	std::size_t max_size = vla_array.max_size();  // std::numeric_limits<std::ptrdiff_t>::max()
 	```
 
 10. `swap()`
