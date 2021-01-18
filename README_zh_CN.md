@@ -239,7 +239,7 @@ your_allocator<int> my_alloc(/* sth */);
 your_allocator<vla::dynarray<int, your_allocator>> my_alloc_2(/* sth */);
 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array(200, my_alloc_2,
-																		   100, my_alloc);
+                                                                           100, my_alloc);
 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
 ```
@@ -252,7 +252,7 @@ your_allocator<vla::dynarray<int, std::allocator>> my_alloc_2(/* sth */);
 
 // cannot compile
 vla::dynarray<vla::dynarray<int, std::allocator>, your_allocator> my_array(200, my_alloc_2,
-																		   100, std_alloc);
+                                                                           100, std_alloc);
 ```
 
 ## `operator=` 的行为
