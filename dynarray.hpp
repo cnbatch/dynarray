@@ -361,7 +361,7 @@ namespace vla
 			if (entire_array_data || nullptr == this_level_array_head)
 			{
 				deallocate_array();
-				move_array(right_dynarray);
+				move_array(right_dynarray, false);
 			}
 			else
 			{
@@ -704,6 +704,8 @@ namespace vla
 
 		void initialise(const allocator_type &other_allocator = allocator_type());
 
+		void reset();
+
 		size_type get_block_size() const { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
 
 		template<typename Ty>
@@ -766,7 +768,7 @@ namespace vla
 		template<typename Ty>
 		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list);
 
-		void move_array(dynarray &other);
+		void move_array(dynarray &other, bool move_allocator = true);
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -833,6 +835,12 @@ namespace vla
 			contiguous_allocator = contiguous_allocator_type();
 
 		array_allocator = other_allocator;
+		reset();
+	}
+
+	template<typename T, template<typename U> typename _Allocator>
+	inline void dynarray<T, _Allocator>::reset()
+	{
 		entire_array_data = nullptr;
 		current_dimension_array_size = 0;
 		current_dimension_array_data = nullptr;
@@ -852,7 +860,7 @@ namespace vla
 	{
 		if (count == 0)
 		{
-			initialise(this->array_allocator);
+			reset();
 			return;
 		}
 
@@ -880,7 +888,7 @@ namespace vla
 			this_level_array_head = starting_address;
 			this_level_array_tail = this_level_array_head + count - 1;
 		}
-		else initialise();
+		else reset();
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -900,7 +908,7 @@ namespace vla
 		const size_type nested_level = internal_impl::inner_type<T, allocator_type>::nested_level;
 		if (nested_level > sizeof...(args) || entire_array_size == 0)
 		{
-			initialise(this->array_allocator);
+			reset();
 			return;
 		}
 
@@ -986,7 +994,7 @@ namespace vla
 		const size_type nested_level = internal_impl::inner_type<T, allocator_type>::nested_level;
 		if (nested_level * 2 > sizeof...(args) || entire_array_size == 0)
 		{
-			initialise(other_allocator);
+			reset();
 			return;
 		}
 
@@ -1386,17 +1394,20 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::move_array(dynarray & other)
+	inline void dynarray<T, _Allocator>::move_array(dynarray &other, bool move_allocator)
 	{
-		array_allocator = other.array_allocator;
-		contiguous_allocator = other.contiguous_allocator;
+		if (move_allocator)
+		{
+			array_allocator = other.array_allocator;
+			contiguous_allocator = other.contiguous_allocator;
+		}
 		entire_array_data = other.entire_array_data;
 		current_dimension_array_size = other.current_dimension_array_size;
 		current_dimension_array_data = other.current_dimension_array_data;
 		this_level_array_head = other.this_level_array_head;
 		this_level_array_tail = other.this_level_array_tail;
 
-		other.initialise();
+		other.reset();
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
