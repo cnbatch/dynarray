@@ -62,17 +62,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace vla
 {
+	template<typename T, template<typename U> typename _Allocator>
+	class dynarray;
+
 	namespace internal_impl
 	{
-		template <typename T, typename _Allocator, typename = void>
+		template <typename T, template<typename U> typename _Allocator>
 		struct inner_type
 		{
 			using value_type = T;
 			enum { nested_level = 0 };
 		};
 
-		template <typename T, typename _Allocator>
-		struct inner_type<T, _Allocator, std::void_t<typename T::value_type>> : inner_type<typename T::value_type, _Allocator>
+		template <typename T, template<typename U> typename _Allocator>
+		struct inner_type<dynarray<T, _Allocator>, typename _Allocator>
 		{
 			using value_type = typename inner_type<T, _Allocator>::value_type;
 			enum { nested_level = inner_type<T, _Allocator>::nested_level + 1 };
@@ -176,7 +179,7 @@ namespace vla
 
 		using allocator_type = _Allocator<T>;
 	private:
-		using internal_value_type = typename internal_impl::inner_type<T, allocator_type>::value_type;
+		using internal_value_type = typename internal_impl::inner_type<T, _Allocator>::value_type;
 		using internal_pointer_type = internal_value_type *;
 	public:
 		using contiguous_allocator_type = _Allocator<internal_value_type>;
@@ -361,7 +364,7 @@ namespace vla
 			if (entire_array_data || nullptr == this_level_array_head)
 			{
 				deallocate_array();
-				move_array(right_dynarray, false);
+				move_array(right_dynarray);
 			}
 			else
 			{
@@ -768,7 +771,7 @@ namespace vla
 		template<typename Ty>
 		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list);
 
-		void move_array(dynarray &other, bool move_allocator = true);
+		void move_array(dynarray &other);
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -905,7 +908,7 @@ namespace vla
 		size_type entire_array_size = each_block_size * count;
 		verify_size(entire_array_size);
 
-		const size_type nested_level = internal_impl::inner_type<T, allocator_type>::nested_level;
+		const size_type nested_level = internal_impl::inner_type<T, _Allocator>::nested_level;
 		if (nested_level > sizeof...(args) || entire_array_size == 0)
 		{
 			reset();
@@ -991,7 +994,7 @@ namespace vla
 		size_type entire_array_size = each_block_size * count;
 		verify_size(entire_array_size);
 
-		const size_type nested_level = internal_impl::inner_type<T, allocator_type>::nested_level;
+		const size_type nested_level = internal_impl::inner_type<T, _Allocator>::nested_level;
 		if (nested_level * 2 > sizeof...(args) || entire_array_size == 0)
 		{
 			reset();
@@ -1100,12 +1103,13 @@ namespace vla
 		current_dimension_array_size = count;
 		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
 		auto list_iter = input_list.begin();
+		internal_pointer_type starting_address = entire_array_data;
 		for (size_type i = 0; i < current_dimension_array_size; ++i, ++list_iter)
 		{
-			internal_pointer_type starting_address = entire_array_data + i * T::expand_list(*list_iter);
 			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 			(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
 			(current_dimension_array_data + i)->allocate_array(starting_address, *list_iter);
+			starting_address += T::expand_list(*list_iter);
 		}
 		this_level_array_head = entire_array_data;
 		this_level_array_tail = this_level_array_head + entire_array_size - 1;
@@ -1125,7 +1129,7 @@ namespace vla
 			current_dimension_array_data = nullptr;
 			auto list_iter = input_list.begin();
 			for (size_type i = 0; i < count; ++i, ++list_iter)
-				std::allocator_traits<allocator_type>::construct(array_allocator, starting_address + i, *list_iter);
+				std::allocator_traits<allocator_type>::construct(contiguous_allocator, starting_address + i, *list_iter);
 
 			this_level_array_head = starting_address;
 			this_level_array_tail = this_level_array_head + count - 1;
@@ -1134,12 +1138,13 @@ namespace vla
 		{
 			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
 			auto list_iter = input_list.begin();
+			internal_pointer_type next_starting_address = starting_address;
 			for (size_type i = 0; i < current_dimension_array_size; ++i, ++list_iter)
 			{
-				internal_pointer_type next_starting_address = starting_address + i * T::expand_list(*list_iter);
 				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
 				(current_dimension_array_data + i)->allocate_array(next_starting_address, *list_iter);
+				next_starting_address += T::expand_list(*list_iter);
 			}
 
 			this_level_array_head = starting_address;
@@ -1198,11 +1203,12 @@ namespace vla
 		else
 		{
 			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+			internal_pointer_type starting_address = entire_array_data;
 			for (size_type i = 0; i < current_dimension_array_size; ++i)
 			{
-				internal_pointer_type starting_address = entire_array_data + i * other[i].get_block_size();
 				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->copy_array(starting_address, *(other.current_dimension_array_data + i));
+				starting_address += other[i].get_block_size();
 			}
 		}
 		this_level_array_head = entire_array_data;
@@ -1231,12 +1237,13 @@ namespace vla
 		else
 		{
 			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+			internal_pointer_type starting_address = entire_array_data;
 			for (size_type i = 0; i < current_dimension_array_size; ++i)
 			{
-				internal_pointer_type starting_address = entire_array_data + i * other[i].get_block_size();
 				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
 				(current_dimension_array_data + i)->copy_array(starting_address, *(other.current_dimension_array_data + i), std::forward<Args>(args)...);
+				starting_address += other[i].get_block_size();
 			}
 		}
 		this_level_array_head = entire_array_data;
@@ -1259,11 +1266,12 @@ namespace vla
 		else
 		{
 			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+			internal_pointer_type next_starting_address = starting_address;
 			for (size_type i = 0; i < current_dimension_array_size; ++i)
 			{
-				internal_pointer_type next_starting_address = starting_address + i * other[i].get_block_size();
 				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->copy_array(next_starting_address, *(other.current_dimension_array_data + i));
+				next_starting_address += other[i].get_block_size();
 			}
 			this_level_array_head = starting_address;
 			this_level_array_tail = this_level_array_head + other.get_block_size() - 1;
@@ -1289,12 +1297,13 @@ namespace vla
 		else
 		{
 			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+			internal_pointer_type next_starting_address = starting_address;
 			for (size_type i = 0; i < current_dimension_array_size; ++i)
 			{
-				internal_pointer_type next_starting_address = starting_address + i * other[i].get_block_size();
 				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
 				(current_dimension_array_data + i)->copy_array(next_starting_address, *(other.current_dimension_array_data + i), std::forward<Args>(args)...);
+				next_starting_address += other[i].get_block_size();
 			}
 			this_level_array_head = starting_address;
 			this_level_array_tail = this_level_array_head + other.get_block_size() - 1;
@@ -1333,11 +1342,12 @@ namespace vla
 
 			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
 			InputIterator other = other_begin;
+			internal_pointer_type starting_address = entire_array_data;
 			for (size_type i = 0; i < current_dimension_array_size; ++i, ++other)
 			{
-				internal_pointer_type starting_address = entire_array_data + i * other->get_block_size();
 				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->copy_array(starting_address, *other);
+				starting_address += other->get_block_size();
 			}
 
 			this_level_array_head = entire_array_data;
@@ -1394,13 +1404,10 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::move_array(dynarray &other, bool move_allocator)
+	inline void dynarray<T, _Allocator>::move_array(dynarray &other)
 	{
-		if (move_allocator)
-		{
-			array_allocator = other.array_allocator;
-			contiguous_allocator = other.contiguous_allocator;
-		}
+		array_allocator = other.array_allocator;
+		contiguous_allocator = other.contiguous_allocator;
 		entire_array_data = other.entire_array_data;
 		current_dimension_array_size = other.current_dimension_array_size;
 		current_dimension_array_data = other.current_dimension_array_data;
