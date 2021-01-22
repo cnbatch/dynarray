@@ -75,7 +75,7 @@ namespace vla
 		};
 
 		template <typename T, template<typename U> typename _Allocator>
-		struct inner_type<dynarray<T, _Allocator>, typename _Allocator>
+		struct inner_type<dynarray<T, _Allocator>, _Allocator>
 		{
 			using value_type = typename inner_type<T, _Allocator>::value_type;
 			enum { nested_level = inner_type<T, _Allocator>::nested_level + 1 };
@@ -1284,7 +1284,6 @@ namespace vla
 		                                            const allocator_type &other_allocator, Args&& ... args)
 	{
 		array_allocator = other_allocator;
-		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		current_dimension_array_size = other.current_dimension_array_size;
 		entire_array_data = nullptr;
 
