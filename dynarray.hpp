@@ -339,15 +339,7 @@ namespace vla
 		 */
 		dynarray& operator=(const dynarray &right_dynarray) noexcept
 		{
-			if (entire_array_data || nullptr == this_level_array_head)
-			{
-				deallocate_array();
-				copy_array(right_dynarray);
-			}
-			else
-			{
-				loop_copy(right_dynarray);
-			}
+			loop_copy(right_dynarray);
 			return *this;
 		}
 
@@ -361,15 +353,7 @@ namespace vla
 		 */
 		dynarray& operator=(dynarray &&right_dynarray) noexcept
 		{
-			if (entire_array_data || nullptr == this_level_array_head)
-			{
-				deallocate_array();
-				move_array(right_dynarray);
-			}
-			else
-			{
-				loop_copy(right_dynarray);
-			}
+			loop_copy(right_dynarray);
 			return *this;
 		}
 
@@ -381,15 +365,7 @@ namespace vla
 		 */
 		dynarray& operator=(std::initializer_list<T> input_list) noexcept
 		{
-			if (entire_array_data || nullptr == this_level_array_head)
-			{
-				deallocate_array();
-				allocate_array(input_list);
-			}
-			else
-			{
-				loop_copy(input_list);
-			}
+			loop_copy(input_list);
 			return *this;
 		}
 
@@ -402,15 +378,7 @@ namespace vla
 		template<typename Ty>
 		dynarray& operator=(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
 		{
-			if (entire_array_data || nullptr == this_level_array_head)
-			{
-				deallocate_array();
-				allocate_array(input_list);
-			}
-			else
-			{
-				loop_copy(input_list);
-			}
+			loop_copy(input_list);
 			return *this;
 		}
 
@@ -885,8 +853,10 @@ namespace vla
 		{
 			current_dimension_array_size = count;
 			current_dimension_array_data = nullptr;	// the data (T*) belong to outermost layer, not this layer
-
 			entire_array_data = nullptr;	// always nullptr in nested-dynarray
+
+			for (size_type i = 0; i < count; ++i)
+				std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, starting_address + i);
 
 			this_level_array_head = starting_address;
 			this_level_array_tail = this_level_array_head + count - 1;
@@ -1363,7 +1333,7 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, _Allocator>::loop_copy(const dynarray &right_dynarray)
 	{
-		if (right_dynarray.size() == 0) return;
+		if (size() == 0 || right_dynarray.size() == 0) return;
 
 		if constexpr (std::is_same_v<T, internal_value_type>)
 		{
@@ -1383,7 +1353,7 @@ namespace vla
 	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<T> input_list)
 	{
 		size_type count = input_list.size();
-		if (count == 0) return;
+		if (size() == 0 || count == 0) return;
 		verify_size(count);
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
@@ -1395,7 +1365,7 @@ namespace vla
 	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list)
 	{
 		size_type count = input_list.size();
-		if (count == 0) return;
+		if (size() == 0 || count == 0) return;
 		verify_size(count);
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)

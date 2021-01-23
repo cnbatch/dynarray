@@ -157,9 +157,9 @@ vla::dynarray<vla::dynarray<int>> vla_array_a(100, 300);
 vla::dynarray<vla::dynarray<int>> vla_array_b(vla_array_a);
 ```
 ```C++
-vla::dynarray<vla::dynarray<int>> vla_array_a(100, 200);
-vla::dynarray<vla::dynarray<int>> vla_array_b;
-vla_array_b = vla_array_a;
+vla::dynarray<vla::dynarray<int>> vla_array_a(100, 200, 10);
+vla::dynarray<vla::dynarray<int>> vla_array_b(100, 200);
+vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
 ```
 
 5. 使用初始化列表
@@ -257,11 +257,9 @@ vla::dynarray<vla::dynarray<int, std::allocator>, your_allocator> my_array(200, 
 
 ## `operator=` 的行爲
 
-由於 `vla::dynarray` 允許創建零大小數組，因此在最外層使用 `operator=` 出現的行爲會不同於內層的行爲。
+對 `vla::dynarray` 使用 `operator=` 祇會對底層數據做賦值操作，不改變 size。
 
-對最外層 `vla::dynarray` 使用 operator= 會複製並替換 `vla::dynarray` 自身：
-
-* 示例1
+1. 如果等號两側的數組存在零大小數組，那麼 `operator=` 不會做任何事情。
 
 ```C++
 vla::dynarray<int> vla_array;
@@ -269,19 +267,55 @@ vla::dynarray<int> vla_array_2(5, 10);
 vla_array = vla_array_2;	// vla_array becomes a copy of vla_array_2
 ```
 
-* 示例2
+2. 如果等號右側數組的大小比左側的小，那麼就會祇填充左側數組的部分元素。
+
+* 示例1
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
-vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 10);
-vla_array = vla_array_2;	// vla_array becomes a copy of vla_array_2, original array (3 × 3) erased.
+vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
+```
+| vla_array |
+| - |
+
+|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+| - | - | - | - | - | - | - |
+|[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[2][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[3][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+
+| vla_array_2 |
+| - |
+
+|   |[x][0]|[x][1]|[x][2]|
+| - | - | - | - |
+|[0][y]| 5 | 5 | 5 |
+|[1][y]| 5 | 5 | 5 |
+|[2][y]| 5 | 5 | 5 |
+
+***
+```C++
+vla_array = vla_array_2;
 ```
 
-* 示例3
+| vla_array |
+| - |
 
-對內層 `vla::dynarray` 使用 `operator=` 祇會對底層數據做賦值操作，不改變 size。
+|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+| - | - | - | - | - | - | - |
+|[0][y]| 5 | 5 | 5 | 0 | 0 | 0 |
+|[1][y]| 5 | 5 | 5 | 0 | 0 | 0 |
+|[2][y]| 5 | 5 | 5 | 0 | 0 | 0 |
+|[3][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 
-如果等號右側數組的大小比左側的小，那麼就會祇填充左側數組的部分元素。
+***
+
+* 示例2
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);

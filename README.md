@@ -161,9 +161,9 @@ vla::dynarray<vla::dynarray<int>> vla_array_a(100, 300);
 vla::dynarray<vla::dynarray<int>> vla_array_b(vla_array_a);
 ```
 ```C++
-vla::dynarray<vla::dynarray<int>> vla_array_a(100, 200);
-vla::dynarray<vla::dynarray<int>> vla_array_b;
-vla_array_b = vla_array_a;
+vla::dynarray<vla::dynarray<int>> vla_array_a(100, 200, 10);
+vla::dynarray<vla::dynarray<int>> vla_array_b(100, 200);
+vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
 ```
 
 5. Initialization list
@@ -262,31 +262,65 @@ vla::dynarray<vla::dynarray<int, std::allocator>, your_allocator> my_array(200, 
 
 ## Behaviour of `operator=`
 
-Since `vla::dynarray` is permitted to create zero-size array, the behaviour of using `operator=` on the outter-most layer will not the same as `operator=` using in the inner layer.
+Using `operator=` on `vla::dynarray` will only assign values to the left-side array. The size will not be changed.
 
-Using `vla::dynarray` on the outter-most layer will get copy a new array and replace the left-side `vla::dynarray` itself:
-
-* Example 1
+1. If one of the array is a zero-size array on either side of the equal sign, `operator=` will do nothing on any side.
 
 ```C++
 vla::dynarray<int> vla_array;
 vla::dynarray<int> vla_array_2(5, 10);
-vla_array = vla_array_2;	// vla_array becomes a copy of vla_array_2
+vla_array = vla_array_2;	// do nothing
 ```
 
-* Example 2
+2. If the size of right-side array is smaller than left-size's, then only some of the left-side elements will be filled.
+
+* Example 1
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
-vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 10);
-vla_array = vla_array_2;	// vla_array becomes a copy of vla_array_2, original array (3 × 3) erased.
+vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
+```
+| vla_array |
+| - |
+
+|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+| - | - | - | - | - | - | - |
+|[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[2][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[3][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+
+| vla_array_2 |
+| - |
+
+|   |[x][0]|[x][1]|[x][2]|
+| - | - | - | - |
+|[0][y]| 5 | 5 | 5 |
+|[1][y]| 5 | 5 | 5 |
+|[2][y]| 5 | 5 | 5 |
+
+***
+```C++
+vla_array = vla_array_2;
 ```
 
-* Example 3
+| vla_array |
+| - |
 
-Using `operator=` in the inner layer of `vla::dynarray` will only assign values to the left-side array. The size will not be changed.
+|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+| - | - | - | - | - | - | - |
+|[0][y]| 5 | 5 | 5 | 0 | 0 | 0 |
+|[1][y]| 5 | 5 | 5 | 0 | 0 | 0 |
+|[2][y]| 5 | 5 | 5 | 0 | 0 | 0 |
+|[3][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
+|[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 
-If the size of right-side array is smaller than left-size's, then only some of the left-side elements will be filled.
+***
+
+* Example 2
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
