@@ -45,6 +45,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   * C++ 17
   * 
   * C++ Standard Library
+  * 
+  * \section sec2 Project on Github:
+  * 
+  * https://github.com/cnbatch/dynarray
   */
 
 #pragma once
@@ -661,10 +665,6 @@ namespace vla
 
 	private:
 
-		allocator_type array_allocator;
-		contiguous_allocator_type contiguous_allocator;
-
-
 		internal_pointer_type entire_array_data;	// always nullptr in nested-dynarray
 
 		size_type current_dimension_array_size;
@@ -672,6 +672,10 @@ namespace vla
 
 		internal_pointer_type this_level_array_head;
 		internal_pointer_type this_level_array_tail;
+
+		allocator_type array_allocator;
+		contiguous_allocator_type contiguous_allocator;
+
 
 		void initialise(const allocator_type &other_allocator = allocator_type());
 
