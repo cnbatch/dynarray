@@ -219,7 +219,7 @@ namespace vla
 		 * @param other_allocator Your custom allocator
 		 */
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>>
-		dynarray(size_type count, allocator_type &&other_allocator)
+		dynarray(size_type count, _Alloc_t &&other_allocator)
 		{
 			initialise(other_allocator);
 			allocate_array(count);
@@ -331,6 +331,18 @@ namespace vla
 		{
 			initialise();
 			allocate_array(input_list);
+		}
+
+		/*!
+		 * @brief Create a multiple-dimensional array with initializer_list.
+		 * 
+		 * @param input_listYour initializer_list
+		 */
+		template<typename Ty, typename ... Args>
+		dynarray(std::initializer_list<std::initializer_list<Ty>> input_list, const allocator_type &other_allocator, Args&& ...args)
+		{
+			initialise(other_allocator);
+			allocate_array(input_list, std::forward<Args>(args)...);
 		}
 
 		/*!
@@ -715,11 +727,11 @@ namespace vla
 
 		void allocate_array(std::initializer_list<T> input_list);
 
-		template<typename Ty>
-		void allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list);
+		template<typename Ty, typename ... Args>
+		void allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list, Args&& ...args);
 
-		template<typename Ty>
-		void allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list);
+		template<typename Ty, typename ... Args>
+		void allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list, const allocator_type &other_allocator = allocator_type(), Args&& ...args);
 
 		void deallocate_array();
 
@@ -1061,8 +1073,8 @@ namespace vla
 
 
 	template<typename T, template<typename U> typename _Allocator>
-	template<typename Ty>
-	inline void dynarray<T, _Allocator>::allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list)
+	template<typename Ty, typename ... Args>
+	inline void dynarray<T, _Allocator>::allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list, Args&& ...args)
 	{
 		size_type count = input_list.size();
 		if (count == 0) return;
@@ -1072,6 +1084,8 @@ namespace vla
 		if (entire_array_size == 0) return;
 		verify_size(entire_array_size);
 
+		if constexpr (sizeof...(args) != 0)
+			contiguous_allocator = expand_allocator(std::forward<Args>(args)...);
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
 
 		current_dimension_array_size = count;
@@ -1082,7 +1096,7 @@ namespace vla
 		{
 			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 			(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
-			(current_dimension_array_data + i)->allocate_array(starting_address, *list_iter);
+			(current_dimension_array_data + i)->allocate_array(starting_address, *list_iter, std::forward<Args>(args)...);
 			starting_address += T::expand_list(*list_iter);
 		}
 		this_level_array_head = entire_array_data;
@@ -1090,9 +1104,10 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	template<typename Ty>
-	inline void dynarray<T, _Allocator>::allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list)
+	template<typename Ty, typename ... Args>
+	inline void dynarray<T, _Allocator>::allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list, const allocator_type &other_allocator, Args&& ...args)
 	{
+		array_allocator = other_allocator;
 		size_type count = input_list.size();
 		verify_size(count);
 		current_dimension_array_size = count;
@@ -1117,7 +1132,7 @@ namespace vla
 			{
 				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
 				(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
-				(current_dimension_array_data + i)->allocate_array(next_starting_address, *list_iter);
+				(current_dimension_array_data + i)->allocate_array(next_starting_address, *list_iter, std::forward<Args>(args)...);
 				next_starting_address += T::expand_list(*list_iter);
 			}
 
@@ -1163,8 +1178,8 @@ namespace vla
 	inline void dynarray<T, _Allocator>::copy_array(const dynarray &other)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
+		if (entire_array_size == 0 || other.current_dimension_array_size == 0) return;
 		current_dimension_array_size = other.current_dimension_array_size;
-		if (entire_array_size == 0 || current_dimension_array_size == 0) return;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
 		for (size_type i = 0; i < entire_array_size; ++i)
@@ -1194,9 +1209,9 @@ namespace vla
 	inline void dynarray<T, _Allocator>::copy_array(const dynarray &other, const allocator_type &other_allocator, Args&&... args)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
+		if (entire_array_size == 0 || other.current_dimension_array_size == 0) return;
 		current_dimension_array_size = other.current_dimension_array_size;
-		if (entire_array_size == 0 || current_dimension_array_size == 0) return;
-		
+
 		if constexpr (!std::is_same_v<T, internal_value_type>)
 			contiguous_allocator = expand_allocator(std::forward<Args>(args)...);
 
@@ -1330,7 +1345,7 @@ namespace vla
 		{
 			static_assert(std::is_same_v<T, internal_value_type> ||
 				std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator>,
-				"cannot convert to a valid dynarray");
+				"invalid iterator, cannot convert to a valid dynarray");
 		}
 	}
 
