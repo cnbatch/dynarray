@@ -1774,8 +1774,7 @@ namespace vla
 	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::allocate_array(size_type count, Args&& ...args)
 	{
 		verify_size(count);
-		size_type each_block_size = 1;
-		each_block_size = dynarray<T, _Allocator>::expand_counts(std::forward<Args>(args)...);
+		size_type each_block_size = dynarray<T, _Allocator>::expand_counts(std::forward<Args>(args)...);
 
 		verify_size(each_block_size);
 
@@ -1871,8 +1870,7 @@ namespace vla
 		entire_array_data = nullptr;	// always nullptr in nested-dynarray
 		array_allocator = other_allocator;
 
-		size_type each_block_size = 1;
-		each_block_size = internal_impl::expand_parameters(std::forward<Args>(args)...);
+		size_type each_block_size = internal_impl::expand_parameters(std::forward<Args>(args)...);
 		contiguous_allocator = expand_allocators(std::forward<Args>(args)...);
 		std::initializer_list<size_type> all_args = { static_cast<size_type>(args)... };
 		each_block_size = std::accumulate(all_args.begin(), all_args.end(), each_block_size, std::multiplies<size_type>());
@@ -1888,7 +1886,7 @@ namespace vla
 			(current_dimension_array_data + i)->allocate_array(next_starting_address, other_allocator, std::forward<Args>(args)...);
 		}
 
-		this_level_array_head = current_dimension_array_data;
+		this_level_array_head = starting_address;
 		this_level_array_tail = this_level_array_head + each_block_size * count - 1;
 	}
 
