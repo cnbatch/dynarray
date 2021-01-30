@@ -1031,6 +1031,9 @@ namespace vla
 
 			for (size_type i = 0; i < count; ++i)
 				std::allocator_traits<allocator_type>::construct(contiguous_allocator, starting_address + i, std::forward<Args>(args)...);
+
+			this_level_array_head = starting_address;
+			this_level_array_tail = this_level_array_head + count - 1;
 		}
 		else
 		{
@@ -1049,10 +1052,10 @@ namespace vla
 				(current_dimension_array_data + i)->contiguous_allocator = contiguous_allocator;
 				(current_dimension_array_data + i)->allocate_array(next_starting_address, other_allocator, std::forward<Args>(args)...);
 			}
-		}
 
-		this_level_array_head = current_dimension_array_data;
-		this_level_array_tail = this_level_array_head + each_block_size * count - 1;
+			this_level_array_head = current_dimension_array_data;
+			this_level_array_tail = this_level_array_head + each_block_size * count - 1;
+		}
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
