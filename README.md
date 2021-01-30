@@ -1,12 +1,13 @@
 # VLA for C++: dynarray
 [简中版介绍在这里](README_zh_CN.md)
+
 [繁中版介紹在這裏](README_zh_HK.md)
 
 A header-only library, providing C99 VLA-like class for C++. The VLA extension provide by compiler is **not** required.
 
 ## Depencencies
 
-C++ 17
+C++ 14 or 17
 
 C++ Standard Library
 
@@ -21,6 +22,40 @@ The most obvious feature of VLA is, a contiguous memory space will be allocated 
 `vector` can also do the same thing for multi-dimensional array, if use it with custom allocator to allocate contiguous memory space. But if the requirement is ‘I don't want to change the size after definition’, almost nothing we can do for it. The only thing we can do is, write a note or comment to inform everyone ‘Do not use `push_back` or `emplace_back`’.
 
 Since `std:dynarray` was removed before C++14 release, I've modified `std::dynarray` and extended it to provide multi-dimensional array (nested-array) support. The behaviour of modified `dynarray` is designed between VLA and `vector`. It will allocates a contiguous memory space as VLA does, and uses C++ iterator as `vector` does.
+
+# File Description
+
+## `Doxyfile`
+
+Create documents with `doxygen`.
+
+## `dynarray.hpp`
+
+Proterotype version, use the same structure (class) all the time. The size is largest.
+
+C++17 required.
+
+## `vla/dynarray.hpp`
+
+Template specialised version. Medium size.
+
+C++14 required.
+
+## `vla/dynarray_lite.hpp`
+
+Lite version, does not guaranteed to provide contiguous memory spaces.
+
+C++17 required.
+
+# Version comparison
+
+|Version Description|File|C++ Version|sizeof dynarray (Outer and middle layer)|sizeof dynarray (Innermost and single layer)|contiguous memory spaces|
+|-|-|-|-|-|-|
+|Proterotype version|`dynarray.hpp`|C++17|48 bytes|48 bytes|Yes|
+|Partial template specialisation|`vla/dynarray.hpp`|C++14|48 bytes|32 bytes|Yes|
+|Lite|`vla/dynarray_lite.hpp`|C++17|24 bytes|24 bytes|No|
+
+Use one of the `.hpp` file only. Please don't use them all at the same time.
 
 # How to use
 
@@ -475,13 +510,27 @@ vla_array_2[0] = vla_array[0];
 
 # Internal Design
 
-For a multilayer dynarray, allocates a contiguous memory space on the outter-most layer first. The size is provided by user. And then allocate each level's management nodes inside. These `dynarray`s have head/tail pointers pointing to the right place, according to the sizes and sequences.
+## Proterotype version
+
+For a multilayer dynarray, allocates a contiguous memory space on the outermost layer first. The size is provided by user. And then allocate each level's management nodes inside. These `dynarray`s have head/tail pointers pointing to the right place, according to the sizes and sequences.
 
 Single-layer `dynarray` is a simplified version of multiple dynarray.
 
 ![single-dynarray](images/vla_dynarray_single.png)
 
 ![multi-dynarray](images/vla_dynarray_nested.png)
+
+## `vla/dynarray.hpp`
+
+![single-dynarray](images/vla_dynarray_single_size_optimised.png)
+
+![multi-dynarray](images/vla_dynarray_nested_size_optimised.png)
+
+## `vla/dynarray_lite.hpp`
+
+![single-dynarray](images/vla_dynarray_single_lite.png)
+
+![multi-dynarray](images/vla_dynarray_nested_lite.png)
 
 ## The most important line of the code
 
@@ -491,7 +540,7 @@ friend class dynarray<dynarray<T, _Allocator>, _Allocator>;
 
 Extremely simple. No lying. No mystery.
 
-Thanks for `friend`, the outter layer can access any data of internal layer, including private members.
+Thanks for `friend`, the outer layer can access any data of internal layer, including private members.
 
 It's still safe. The users outside this library are still not able to use private members.
 

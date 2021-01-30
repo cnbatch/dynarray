@@ -1,12 +1,13 @@
 # VLA for C++: dynarray
 [English Version](README.md)
+
 [繁中版介紹在這裏](README_zh_HK.md)
 
 这是个 header-only 的库，为 C++ 提供 C99 VLA 的类似用法。不必在 C++ 中使用编译器提供的 VLA 扩展功能。
 
 ## 依赖项
 
-C++ 17
+C++ 14 或 17
 
 C++ 标准库
 
@@ -17,6 +18,34 @@ C 语言自 C99 开始提供了 VLA，这是我最喜欢的 C 语言特性。C++
 VLA 最大的特点是，可以在连续的内存空间内使用动态定义的数组（多维数组也是这样），并且定义后该数组长度不变。`vector` 虽然可以做到相似的功能，例如使用自定义的 `allocator` 连续分配空间，但是对数组长度不再改变就没什么好办法，只能写个提醒告知后续使用者不要用 `push_back` 或 `emplace_back`。
 
 由于 `std:dynarray` 已经在C++14成为标准前删除了，所以这里我做了一个 `std::dynarray` 的扩充版本，为它提供多维数组（嵌套数组）功能。修改后的 `dynarray` 介于 VLA 和 `vector` 之间，既能保持像那样 VLA 连续分配空间，也能保持像 `vector` 那样使用 C++ 迭代器。
+
+# 文件说明
+
+## `Doxyfile`
+
+用于 doxygen 创建说明文档
+
+## `dynarray.hpp`
+
+原型版本，全局通用结构，占用内存相对较多。需要 C++17。
+
+## `vla/dynarray.hpp`
+
+模板特化过的版本，占用内存中等。只需 C++14。
+
+## `vla/dynarray_lite.hpp`
+
+极小化版本，不保证提供连续的内存空间。需要 C++17。
+
+# 版本对比
+
+|版本描述|文件|C++需求|sizeof dynarray (外层及中层)|sizeof dynarray (最内层及单层)|保证提供连续内存|
+|-|-|-|-|-|-|
+|原型版本|`dynarray.hpp`|C++17|48 bytes|48 bytes|是|
+|模板偏特化|`vla/dynarray.hpp`|C++14|48 bytes|32 bytes|是|
+|Lite|`vla/dynarray_lite.hpp`|C++17|24 bytes|24 bytes|否|
+
+请只使用其中一个 `.hpp` 文件。请勿全部都用。
 
 # 使用方法
 
@@ -468,6 +497,9 @@ vla_array_2[0] = vla_array[0];
 
 
 # 内部设计
+
+## 原型版本
+
 对于多层 dynarray，先由最外层 dynarray 在内存中分配一块连续的数组空间，大小由用户提供。然后再分配内部 dynarray 管理节点，这些内部各 dynarray 拥有头尾指针，按照顺序、大小指向正确的位置。
 
 单层 dynarray 是多层 dynarray 的简化版。
@@ -475,6 +507,18 @@ vla_array_2[0] = vla_array[0];
 ![单层dynarray](images/vla_dynarray_single.png)
 
 ![多层dynarray](images/vla_dynarray_nested.png)
+
+## `vla/dynarray.hpp`
+
+![单层dynarray](images/vla_dynarray_single_size_optimised.png)
+
+![多层dynarray](images/vla_dynarray_nested_size_optimised.png)
+
+## `vla/dynarray_lite.hpp`
+
+![单层dynarray](images/vla_dynarray_single_lite.png)
+
+![多层dynarray](images/vla_dynarray_nested_lite.png)
 
 ## 最关键的一行代码
 
