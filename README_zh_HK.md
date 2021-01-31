@@ -35,15 +35,15 @@ VLA 最大的特點是，可以在連續的記憶體空間內使用動態定義�
 
 ## `vla/dynarray_lite.hpp`
 
-極小化版本，不保證提供連續的記憶體空間。需要 C++17。
+極小化版本，不保證向多維數組提供連續的記憶體空間。需要 C++17。
 
 # 版本对比
 
-|版本描述|檔案|C++需求|sizeof dynarray (外層及中層)|sizeof dynarray (最內層及單層)|保證提供連續記憶體空間|
+|版本描述|檔案|C++需求|sizeof dynarray (外層及中層)|sizeof dynarray (最內層及單層)|多維數組連續記憶體空間|
 |-|-|-|-|-|-|
 |原型版本|`dynarray.hpp`|C++17|48 bytes|48 bytes|是|
 |模板偏特化|`vla/dynarray.hpp`|C++14|48 bytes|32 bytes|是|
-|Lite|`vla/dynarray_lite.hpp`|C++17|24 bytes|24 bytes|否|
+|Lite 版本|`vla/dynarray_lite.hpp`|C++17|24 bytes|24 bytes|否|
 
 請祇使用其中一個 `.hpp` 檔案。請勿全部都用。
 
@@ -271,6 +271,17 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array(200, 
                                                                            100, my_alloc);
 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
+```
+
+亦可以直接這樣來；
+
+```C++
+template<typename T>
+class your_allocator { /* ...... */ };
+
+vla::dynarray<int, your_allocator> my_array_1(200);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200, 100);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);
 ```
 
 注意事項：所有分配器來源都必須相同，否則會無法編譯。以下是**錯誤例子**

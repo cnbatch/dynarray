@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*!***************************************************************//*!
- * @file   dynarray.hpp
+ * @file   dynarray_lite.hpp
  * @brief  VLA for C++
  *
  * @author cnbatch

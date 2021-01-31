@@ -1,4 +1,3 @@
-# VLA for C++: dynarray
 [简中版介绍在这里](README_zh_CN.md)
 
 [繁中版介紹在這裏](README_zh_HK.md)
@@ -43,17 +42,17 @@ C++14 required.
 
 ## `vla/dynarray_lite.hpp`
 
-Lite version, does not guaranteed to provide contiguous memory spaces.
+Lite version, does not guaranteed to provide contiguous memory spaces for multi-dimensional array.
 
 C++17 required.
 
 # Version comparison
 
-|Version Description|File|C++ Version|sizeof dynarray (Outer and middle layer)|sizeof dynarray (Innermost and single layer)|contiguous memory spaces|
+|Version Description|File|C++ Version|sizeof dynarray (Outer and middle layer)|sizeof dynarray (Innermost and single layer)|contiguous memory spaces for multi-dimensional array|
 |-|-|-|-|-|-|
 |Proterotype version|`dynarray.hpp`|C++17|48 bytes|48 bytes|Yes|
 |Partial template specialisation|`vla/dynarray.hpp`|C++14|48 bytes|32 bytes|Yes|
-|Lite|`vla/dynarray_lite.hpp`|C++17|24 bytes|24 bytes|No|
+|Lite Version|`vla/dynarray_lite.hpp`|C++17|24 bytes|24 bytes|No|
 
 Use one of the `.hpp` file only. Please don't use them all at the same time.
 
@@ -282,6 +281,17 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array(200, 
                                                                            100, my_alloc);
 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
+```
+
+You can also do this directly:
+
+```C++
+template<typename T>
+class your_allocator { /* ...... */ };
+
+vla::dynarray<int, your_allocator> my_array_1(200);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200, 100);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);
 ```
 
 Note: all of the allocators must come from the same source (template, class) or dynarray will not be compiled. **Incorrect Example:**
