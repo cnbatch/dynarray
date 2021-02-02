@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*!***************************************************************//*!
- * @file   dynarray_lite.hpp
+ * @file   dynarray_mini.hpp
  * @brief  VLA for C++
  *
  * @author cnbatch
@@ -66,23 +66,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace vla
 {
-	template<typename T, template<typename U> typename _Allocator>
+	template<typename T>
 	class dynarray;
 
 	namespace internal_impl
 	{
-		template <typename T, template<typename U> typename _Allocator>
+		template <typename T>
 		struct inner_type
 		{
 			using value_type = T;
 			enum { nested_level = 0 };
 		};
 
-		template <typename T, template<typename U> typename _Allocator>
-		struct inner_type<dynarray<T, _Allocator>, _Allocator>
+		template <typename T>
+		struct inner_type<dynarray<T>>
 		{
-			using value_type = typename inner_type<T, _Allocator>::value_type;
-			enum { nested_level = inner_type<T, _Allocator>::nested_level + 1 };
+			using value_type = typename inner_type<T>::value_type;
+			enum { nested_level = inner_type<T>::nested_level + 1 };
 		};
 
 		template<typename Skip>
@@ -160,13 +160,12 @@ namespace vla
 		return vla_iterator<T>(other) += offset;
 	}
 
-	template<typename T, template<typename U> typename _Allocator = std::allocator>
+	template<typename T>
 	class dynarray
 	{
-		friend class dynarray<dynarray<T, _Allocator>, _Allocator>;
-		using internal_value_type = typename internal_impl::inner_type<T, _Allocator>::value_type;
+		friend class dynarray<dynarray<T>>;
+		using internal_value_type = typename internal_impl::inner_type<T>::value_type;
 		using internal_pointer_type = internal_value_type *;
-
 	public:
 
 		// Member types
@@ -184,15 +183,13 @@ namespace vla
 		using reverse_iterator = std::reverse_iterator<iterator>;
 		using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-		using allocator_type = _Allocator<T>;
-
 		// Member functions
 
 		/*!
 		 * @brief Default Constructor.
 		 * Create a zero-size array.
 		 */
-		dynarray() : array_allocator(allocator_type())
+		dynarray()
 		{
 			initialise();
 		}
@@ -203,21 +200,7 @@ namespace vla
 		 *
 		 * @param count The size (length) of array
 		 */
-		dynarray(size_type count) : array_allocator(allocator_type())
-		{
-			initialise();
-			allocate_array(count);
-		}
-
-		/*!
-		 * @brief Construct by count and use your custom allocator.
-		 * Create a one-dimensional array.
-		 * 
-		 * @param count The size (length) of array
-		 * @param other_allocator Your custom allocator
-		 */
-		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>>
-		dynarray(size_type count, _Alloc_t &&other_allocator) : array_allocator(other_allocator)
+		dynarray(size_type count)
 		{
 			initialise();
 			allocate_array(count);
@@ -238,32 +221,19 @@ namespace vla
 		 * @param ...args If 'sizeof...(args)' is greater than the level of nested array, the rest of arg(s) will be used for initial array's elements.
 		 */
 		template<typename ... Args>
-		dynarray(size_type count, Args&& ... args) : array_allocator(allocator_type())
+		dynarray(size_type count, Args&& ... args)
 		{
 			initialise();
 			allocate_array(count, std::forward<Args>(args)...);
 		}
 
-		/*!
-		 * @brief Construct by multiple 'count' and use your custom allocator.
-		 * 
-		 * @param count The first dimension
-		 * @param other_allocator Your custom allocator
-		 * @param ...args If 'sizeof...(args)' is greater than the level of nested array, the rest of arg(s) will be used for initial array's elements.
-		 */
-		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ... Args>
-		dynarray(size_type count, _Alloc_t &&other_allocator, Args&& ... args) : array_allocator(other_allocator)
-		{
-			initialise();
-			allocate_array(count, other_allocator, std::forward<Args>(args)...);
-		}
 
 		/*!
 		 * @brief Duplicate an existing dynarray.
 		 * 
 		 * @param other Another array to be copied
 		 */
-		dynarray(const dynarray &other) : array_allocator(allocator_type())
+		dynarray(const dynarray &other)
 		{
 			initialise();
 			copy_array(other);
@@ -274,23 +244,9 @@ namespace vla
 		 *
 		 * @param other Another array
 		 */
-		dynarray(dynarray &&other) : array_allocator(allocator_type())
+		dynarray(dynarray &&other)
 		{
 			move_array(other);
-		}
-
-		/*!
-		 * @brief Duplicate an existing dynarray and use your custom allocator.
-		 * 
-		 * @param other Another array to be copied
-		 * @param other_allocator Allocator for the first level
-		 * @param ...args Other dimention's allocator(s)
-		 */
-		template<typename ... Args>
-		dynarray(const dynarray &other, const allocator_type &other_allocator, Args&& ... args) : array_allocator(other_allocator)
-		{
-			initialise();
-			copy_array(other, std::forward<Args>(args)...);
 		}
 
 		/*!
@@ -299,26 +255,34 @@ namespace vla
 		 * @param other_begin begin(), cbegin() of iterator; or rbegin(), crbegin() of reverse iterator
 		 * @param other_end end(), cend() of iterator; or rend(), crend() of reverse iterator
 		 */
-
 		template<typename InputIterator, typename = decltype(*std::declval<InputIterator&>(), ++std::declval<InputIterator&>(), void())>
-		dynarray(InputIterator other_begin, InputIterator other_end) : array_allocator(allocator_type())
+		dynarray(InputIterator other_begin, InputIterator other_end)
 		{
 			initialise();
 			copy_array(other_begin, other_end);
 		}
 
 		/*!
-		 * @brief Create a one-dimensional array with initializer_list and use your allocator (if any)
+		 * @brief Create a one-dimensional array with initializer_list
 		 * 
 		 * @param input_list Your initializer_list
-		 * @param other_allocator Your allocator (if any)
 		 */
-		template<typename ... Args>
-		dynarray(std::initializer_list<T> input_list, const allocator_type &other_allocator = allocator_type(), Args&& ...args)
-			: array_allocator(other_allocator)
+		dynarray(std::initializer_list<T> input_list)
 		{
 			initialise();
-			allocate_array(input_list, std::forward<Args>(args)...);
+			allocate_array(input_list);
+		}
+
+		/*!
+		 * @brief Create a multiple-dimensional array with initializer_list.
+		 *
+		 * @param input_listYour initializer_list
+		 */
+		template<typename Ty>
+		dynarray(std::initializer_list<std::initializer_list<Ty>> input_list)
+		{
+			initialise();
+			allocate_array(input_list);
 		}
 
 		/*!
@@ -374,14 +338,6 @@ namespace vla
 			return *this;
 		}
 
-		/*!
-		 * @brief Deconstruct.
-		 * 
-		 */
-		~dynarray()
-		{
-			deallocate_array();
-		}
 
 		// Element access
 
@@ -469,8 +425,8 @@ namespace vla
 		internal_pointer_type data() noexcept
 		{
 			if constexpr (std::is_same_v<T, internal_value_type>)
-				return current_dimension_array_data;
-			else return current_dimension_array_data->data();
+				return current_dimension_array_data.get();
+			else return current_dimension_array_data[0].data();
 		}
 
 		/*!
@@ -484,8 +440,8 @@ namespace vla
 		const internal_pointer_type data() const noexcept
 		{
 			if constexpr (std::is_same_v<T, internal_value_type>)
-				return current_dimension_array_data;
-			else return current_dimension_array_data->data();
+				return current_dimension_array_data.get();
+			else return current_dimension_array_data[0].data();
 		}
 
 		/*!
@@ -557,7 +513,7 @@ namespace vla
 		 * 
 		 * @return Iterator to the first element.
 		*/
-		iterator begin() noexcept { return iterator(current_dimension_array_data); }
+		iterator begin() noexcept { return iterator(current_dimension_array_data.get()); }
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -566,7 +522,7 @@ namespace vla
 		 *
 		 * @return Iterator to the first element.
 		*/
-		const_iterator begin() const noexcept { return const_iterator(current_dimension_array_data); }
+		const_iterator begin() const noexcept { return const_iterator(current_dimension_array_data.get()); }
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -584,7 +540,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		iterator end() noexcept { return iterator(current_dimension_array_data + current_dimension_array_size); }
+		iterator end() noexcept { return iterator(current_dimension_array_data.get() + current_dimension_array_size); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -593,7 +549,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		const_iterator end() const noexcept { return const_iterator(current_dimension_array_data + current_dimension_array_size); }
+		const_iterator end() const noexcept { return const_iterator(current_dimension_array_data.get() + current_dimension_array_size); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -664,9 +620,7 @@ namespace vla
 	private:
 
 		size_type current_dimension_array_size;
-		pointer current_dimension_array_data;
-
-		allocator_type array_allocator;
+		std::unique_ptr<T[]> current_dimension_array_data;
 
 
 		void initialise();
@@ -684,18 +638,12 @@ namespace vla
 		template<typename ...Args>
 		void allocate_array(size_type count, Args&& ... args);
 
-		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ...Args>
-		void allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args);
+		void allocate_array(std::initializer_list<T> input_list);
 
-		template<typename ... Args>
-		void allocate_array(std::initializer_list<T> input_list, Args&& ...args);
-
-		void deallocate_array();
+		template <typename Ty>
+		void allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list);
 
 		void copy_array(const dynarray &other);
-
-		template<typename ...Args>
-		void copy_array(const dynarray &other, Args&& ... args);
 
 		template<typename InputIterator>
 		void copy_array(InputIterator other_begin, InputIterator other_end);
@@ -710,10 +658,10 @@ namespace vla
 		void move_array(dynarray &other);
 	};
 
-	template<typename T, template<typename U> typename _Allocator>
+	template<typename T>
 	template<typename Ty>
-	inline typename dynarray<T, _Allocator>::size_type
-	dynarray<T, _Allocator>::expand_list(std::initializer_list<Ty> init)
+	inline typename dynarray<T>::size_type
+	dynarray<T>::expand_list(std::initializer_list<Ty> init)
 	{
 		if constexpr (std::is_same_v<T, internal_value_type>)
 		{
@@ -728,10 +676,10 @@ namespace vla
 		}
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
+	template<typename T>
 	template<typename ...Args>
-	inline typename dynarray<T, _Allocator>::size_type
-	dynarray<T, _Allocator>::expand_counts(size_type count, Args && ...args)
+	inline typename dynarray<T>::size_type
+	dynarray<T>::expand_counts(size_type count, Args && ...args)
 	{
 		if constexpr (std::is_same_v<T, internal_value_type> || sizeof...(args) == 0)
 			return count;
@@ -739,22 +687,22 @@ namespace vla
 			return T::expand_counts(std::forward<Args>(args)...) * count;
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::initialise()
+	template<typename T>
+	inline void dynarray<T>::initialise()
 	{
 		current_dimension_array_size = 0;
 		current_dimension_array_data = nullptr;
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::verify_size(size_type count)
+	template<typename T>
+	inline void dynarray<T>::verify_size(size_type count)
 	{
 		if (count > static_cast<size_type>(std::numeric_limits<difference_type>::max()))
 			throw std::length_error("array too long");
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::allocate_array(size_type count)
+	template<typename T>
+	inline void dynarray<T>::allocate_array(size_type count)
 	{
 		if (count == 0)
 		{
@@ -764,14 +712,12 @@ namespace vla
 
 		verify_size(count);
 		current_dimension_array_size = count;
-		current_dimension_array_data = array_allocator.allocate(count);
-		for (size_type i = 0; i < count; ++i)
-			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
+		current_dimension_array_data = std::make_unique<T[]>(current_dimension_array_size);
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
+	template<typename T>
 	template<typename ... Args>
-	inline void dynarray<T, _Allocator>::allocate_array(size_type count, Args&& ...args)
+	inline void dynarray<T>::allocate_array(size_type count, Args&& ...args)
 	{
 		verify_size(count);
 		size_type each_block_size = 1;
@@ -783,7 +729,7 @@ namespace vla
 		size_type entire_array_size = each_block_size * count;
 		verify_size(entire_array_size);
 
-		const size_type nested_level = internal_impl::inner_type<T, _Allocator>::nested_level;
+		const size_type nested_level = internal_impl::inner_type<T>::nested_level;
 		if (nested_level > sizeof...(args) || entire_array_size == 0)
 		{
 			initialise();
@@ -791,94 +737,63 @@ namespace vla
 		}
 
 		current_dimension_array_size = count;
-		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+		current_dimension_array_data = std::make_unique<T[]>(current_dimension_array_size);
 		for (size_type i = 0; i < current_dimension_array_size; ++i)
-			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i, std::forward<Args>(args)...);
+		{
+			if constexpr (!std::is_same_v<T, internal_value_type>)
+				current_dimension_array_data[i].allocate_array(std::forward<Args>(args)...);
+			else if constexpr (sizeof...(args) > 0)
+				current_dimension_array_data[i] = T{ std::forward<Args>(args)... };
+		}
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	template<typename _Alloc_t, typename, typename ... Args>
-	inline void dynarray<T, _Allocator>::allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
-	{
-		verify_size(count);
 
-		size_type each_block_size = 1;
-		if constexpr (!std::is_same_v<T, internal_value_type>)
-		{
-			each_block_size = internal_impl::expand_parameters(std::forward<Args>(args)...);
-			verify_size(each_block_size);
-		}
-
-		size_type entire_array_size = each_block_size * count;
-		verify_size(entire_array_size);
-
-		const size_type nested_level = internal_impl::inner_type<T, _Allocator>::nested_level;
-		if (nested_level * 2 > sizeof...(args) || entire_array_size == 0)
-		{
-			initialise();
-			return;
-		}
-
-		current_dimension_array_size = count;
-		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
-		for (size_type i = 0; i < current_dimension_array_size; ++i)
-			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i, std::forward<Args>(args)...);
-	}
-
-	template<typename T, template<typename U> typename _Allocator>
-	template<typename ... Args>
-	inline void dynarray<T, _Allocator>::allocate_array(std::initializer_list<T> input_list, Args&& ...args)
+	template<typename T>
+	inline void dynarray<T>::allocate_array(std::initializer_list<T> input_list)
 	{
 		size_type count = input_list.size();
 		if (count == 0) return;
 		verify_size(count);
 		current_dimension_array_size = count;
-		current_dimension_array_data = array_allocator.allocate(count);
+		current_dimension_array_data = std::make_unique<T[]>(current_dimension_array_size);
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count; ++i, ++list_iter)
-			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i, *list_iter, std::forward<Args>(args)...);
+			current_dimension_array_data[i] = *list_iter;
 	}
 
-
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::deallocate_array()
+	template<typename T>
+	template<typename Ty>
+	inline void dynarray<T>::allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list)
 	{
-		if (current_dimension_array_data)
+		size_type count = input_list.size();
+		if (count == 0) return;
+		verify_size(count);
+		current_dimension_array_size = count;
+		current_dimension_array_data = std::make_unique<T[]>(current_dimension_array_size);
+		auto list_iter = input_list.begin();
+		for (size_type i = 0; i < count; ++i, ++list_iter)
+			current_dimension_array_data[i].allocate_array(*list_iter);
+	}
+
+	template<typename T>
+	inline void dynarray<T>::copy_array(const dynarray &other)
+	{
+		if (other.current_dimension_array_size == 0) return;
+		current_dimension_array_size = other.current_dimension_array_size;
+
+		current_dimension_array_data = std::make_unique<T[]>(current_dimension_array_size);
+		for (size_type i = 0; i < current_dimension_array_size; ++i)
 		{
-			for (size_type i = current_dimension_array_size; i != 0; --i)
-				std::allocator_traits<allocator_type>::destroy(array_allocator, current_dimension_array_data + i - 1);
-			array_allocator.deallocate(current_dimension_array_data, current_dimension_array_size);
-			current_dimension_array_data = nullptr;
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				current_dimension_array_data[i] = other.current_dimension_array_data[i];
+			else
+				current_dimension_array_data[i].copy_array(other.current_dimension_array_data[i]);
 		}
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::copy_array(const dynarray &other)
-	{
-		if (other.current_dimension_array_size == 0) return;
-		current_dimension_array_size = other.current_dimension_array_size;
-
-		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
-		for (size_type i = 0; i < current_dimension_array_size; ++i)
-			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i, *(other.current_dimension_array_data + i));
-	}
-
-	template<typename T, template<typename U> typename _Allocator>
-	template<typename ...Args>
-	inline void dynarray<T, _Allocator>::copy_array(const dynarray &other, Args&&... args)
-	{
-		if (other.current_dimension_array_size == 0) return;
-		current_dimension_array_size = other.current_dimension_array_size;
-
-		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
-		for (size_type i = 0; i < current_dimension_array_size; ++i)
-			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i,
-															*(other.current_dimension_array_data + i), std::forward<Args>(args)...);
-	}
-
-	template<typename T, template<typename U> typename _Allocator>
+	template<typename T>
 	template<typename InputIterator>
-	inline void dynarray<T, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
+	inline void dynarray<T>::copy_array(InputIterator other_begin, InputIterator other_end)
 	{
 		static_assert(std::is_same_v<T, internal_value_type> ||
 			std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator>,
@@ -888,117 +803,120 @@ namespace vla
 		if (count == 0) return;
 
 		current_dimension_array_size = count;
-		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+		current_dimension_array_data = std::make_unique<T[]>(current_dimension_array_size);
 		InputIterator other = other_begin;
 		for (size_type i = 0; i < current_dimension_array_size; ++i, ++other)
-			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i, *other);
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				current_dimension_array_data[i] = *other;
+			else
+				current_dimension_array_data[i].copy_array(*other);
+		}
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::loop_copy(const dynarray &right_dynarray)
+	template<typename T>
+	inline void dynarray<T>::loop_copy(const dynarray &right_dynarray)
 	{
 		if (size() == 0 || right_dynarray.size() == 0) return;
 
 		for (size_type i = 0; i < current_dimension_array_size && i < right_dynarray.current_dimension_array_size; ++i)
-			*(current_dimension_array_data + i) = *(right_dynarray.current_dimension_array_data + i);
+			current_dimension_array_data[i] = right_dynarray.current_dimension_array_data[i];
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<T> input_list)
+	template<typename T>
+	inline void dynarray<T>::loop_copy(std::initializer_list<T> input_list)
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
 		verify_size(count);
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
-			*(current_dimension_array_data + i) = *list_iter;
+			current_dimension_array_data[i] = *list_iter;
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
+	template<typename T>
 	template<typename Ty>
-	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list)
+	inline void dynarray<T>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list)
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
 		verify_size(count);
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
-			(current_dimension_array_data + i)->loop_copy(*list_iter);
+			current_dimension_array_data[i].loop_copy(*list_iter);
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::move_array(dynarray &other)
+	template<typename T>
+	inline void dynarray<T>::move_array(dynarray &other)
 	{
-		array_allocator = other.array_allocator;
 		current_dimension_array_size = other.current_dimension_array_size;
-		current_dimension_array_data = other.current_dimension_array_data;
-
+		current_dimension_array_data = std::move(other.current_dimension_array_data);
 		other.initialise();
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::reference
-	dynarray<T, _Allocator>::at(size_type pos)
+	template<typename T>
+	inline typename dynarray<T>::reference
+	dynarray<T>::at(size_type pos)
 	{
 		if (pos >= size())
 			throw std::out_of_range("out of range, incorrect position");
-		return (*this)[pos];
+		return current_dimension_array_data[pos];
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::const_reference
-	dynarray<T, _Allocator>::at(size_type pos) const
+	template<typename T>
+	inline typename dynarray<T>::const_reference
+	dynarray<T>::at(size_type pos) const
 	{
 		if (pos >= size())
 			throw std::out_of_range("out of range, incorrect position");
-		return (*this)[pos];
+		return current_dimension_array_data[pos];
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::reference
-	dynarray<T, _Allocator>::operator[](size_type pos)
+	template<typename T>
+	inline typename dynarray<T>::reference
+	dynarray<T>::operator[](size_type pos)
 	{
-		return *(current_dimension_array_data + pos);
+		return current_dimension_array_data[pos];
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline constexpr typename dynarray<T, _Allocator>::const_reference
-	dynarray<T, _Allocator>::operator[](size_type pos) const
+	template<typename T>
+	inline constexpr typename dynarray<T>::const_reference
+	dynarray<T>::operator[](size_type pos) const
 	{
-		return *(current_dimension_array_data + pos);
+		return current_dimension_array_data[pos];
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::reference
-	dynarray<T, _Allocator>::back()
+	template<typename T>
+	inline typename dynarray<T>::reference
+	dynarray<T>::back()
 	{
-		return (*this)[current_dimension_array_size - 1];
+		return current_dimension_array_data[current_dimension_array_size - 1];
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, _Allocator>::const_reference
-	dynarray<T, _Allocator>::back() const
+	template<typename T>
+	inline typename dynarray<T>::const_reference
+	dynarray<T>::back() const
 	{
-		return (*this)[current_dimension_array_size - 1];
+		return current_dimension_array_data[current_dimension_array_size - 1];
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::swap(dynarray &other) noexcept
+	template<typename T>
+	inline void dynarray<T>::swap(dynarray &other) noexcept
 	{
-		std::swap(array_allocator, other.array_allocator);
 		std::swap(current_dimension_array_size, other.current_dimension_array_size);
 		std::swap(current_dimension_array_data, other.current_dimension_array_data);
 	}
 
-	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::fill(const internal_value_type & value)
+	template<typename T>
+	inline void dynarray<T>::fill(const internal_value_type & value)
 	{
-		if constexpr (std::is_same_v<T, internal_value_type>)
-			for (size_type i = 0; i < current_dimension_array_size; ++i)
-				*(current_dimension_array_data + i) = value;
-		else
-			for (size_type i = 0; i < current_dimension_array_size; ++i)
-				(current_dimension_array_data + i)->fill(value);
+		for (size_type i = 0; i < current_dimension_array_size; ++i)
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				current_dimension_array_data[i] = value;
+			else
+				current_dimension_array_data[i].fill(value);
+		}
 	}
 
 }	// namespace vla

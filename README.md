@@ -1,3 +1,5 @@
+# VLA for C++: dynarray
+
 [简中版介绍在这里](README_zh_CN.md)
 
 [繁中版介紹在這裏](README_zh_HK.md)
@@ -32,29 +34,42 @@ Create documents with `doxygen`.
 
 Proterotype version, use the same structure (class) all the time. The size is largest.
 
-C++17 required.
+Requires C++17.
 
 ## `vla/dynarray.hpp`
 
 Template specialised version. Medium size.
 
-C++14 required.
+Requires C++14.
 
 ## `vla/dynarray_lite.hpp`
 
 Lite version, does not guaranteed to provide contiguous memory spaces for multi-dimensional array.
 
-C++17 required.
+Requires C++17.
+
+## `vla/dynarray_mini.hpp`
+
+Using `std::unique_ptr<[]>` inside the `dynarray`, does not guaranteed to provide contiguous memory spaces for multi-dimensional array. Custom allocator cannot be used in this version.
+
+Requires C++17.
 
 # Version comparison
 
-|Version Description|File|C++ Version|sizeof dynarray (Outer and middle layer)|sizeof dynarray (Innermost and single layer)|contiguous memory spaces for multi-dimensional array|
-|-|-|-|-|-|-|
-|Proterotype version|`dynarray.hpp`|C++17|48 bytes|48 bytes|Yes|
-|Partial template specialisation|`vla/dynarray.hpp`|C++14|48 bytes|32 bytes|Yes|
-|Lite Version|`vla/dynarray_lite.hpp`|C++17|24 bytes|24 bytes|No|
+| Version Description                                  | Proterotype version | Partial template specialisation | Lite Version           | Mini Version           |
+| ---------------------------------------------------- | ------------------- | ------------------------------- | ---------------------- | ---------------------- |
+| File<sup>1</sup>                                     | dynarray.hpp        | vla/dynarray.hpp                | vla/dynarray\_lite.hpp | vla/dynarray\_mini.hpp |
+| C++ Version                                          | C++17               | C++14                           | C++17                  | C++17                  |
+| sizeof dynarray (Outermost<sup>2</sup>)              | 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
+| sizeof dynarray (middle layer per node<sup>2</sup>)  | 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
+| sizeof dynarray (Innermost per node<sup>2</sup>)     | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
+| sizeof dynarray (one-dimensional array)              | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
+| contiguous memory spaces for multi-dimensional array | Yes                 | Yes                             | No                     | No                     |
+| custom allocator can be used                         | Yes                 | Yes                             | Yes                    | No                     |
 
-Use one of the `.hpp` file only. Please don't use them all at the same time.
+<sup>1</sup> Use one of the `.hpp` file only. Please don't use them all at the same time.
+
+<sup>2</sup> Multi-dimensional array
 
 # How to use
 
