@@ -1017,11 +1017,10 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, _Allocator>::move_array(dynarray &other)
 	{
-		contiguous_allocator = other.contiguous_allocator;
-		entire_array_data = other.entire_array_data;
-		this_level_array_head = other.this_level_array_head;
-		this_level_array_tail = other.this_level_array_tail;
-
+		std::swap(contiguous_allocator, other.contiguous_allocator);
+		std::swap(entire_array_data, other.entire_array_data);
+		std::swap(this_level_array_head, other.this_level_array_head);
+		std::swap(this_level_array_tail, other.this_level_array_tail);
 		other.reset();
 	}
 
@@ -1074,10 +1073,10 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, _Allocator>::swap(dynarray &other) noexcept
 	{
-		std::swap(contiguous_allocator, other.contiguous_allocator);
-		std::swap(entire_array_data, other.entire_array_data);
-		std::swap(this_level_array_head, other.this_level_array_head);
-		std::swap(this_level_array_tail, other.this_level_array_tail);
+		difference_type length = std::min<difference_type>(this_level_array_tail - this_level_array_head + 1,
+			other.this_level_array_tail - other.this_level_array_head + 1);
+		for (difference_type i = 0; i < length; ++i)
+			std::swap(*(this_level_array_head + i), *(other.this_level_array_head + i));
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -2143,14 +2142,13 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::move_array(dynarray &other)
 	{
-		array_allocator = other.array_allocator;
-		contiguous_allocator = other.contiguous_allocator;
-		entire_array_data = other.entire_array_data;
-		current_dimension_array_size = other.current_dimension_array_size;
-		current_dimension_array_data = other.current_dimension_array_data;
-		this_level_array_head = other.this_level_array_head;
-		this_level_array_tail = other.this_level_array_tail;
-
+		std::swap(array_allocator, other.array_allocator);
+		std::swap(contiguous_allocator, other.contiguous_allocator);
+		std::swap(entire_array_data, other.entire_array_data);
+		std::swap(current_dimension_array_size, other.current_dimension_array_size);
+		std::swap(current_dimension_array_data, other.current_dimension_array_data);
+		std::swap(this_level_array_head, other.this_level_array_head);
+		std::swap(this_level_array_tail, other.this_level_array_tail);
 		other.reset();
 	}
 
@@ -2203,13 +2201,8 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::swap(dynarray &other) noexcept
 	{
-		std::swap(array_allocator, other.array_allocator);
-		std::swap(contiguous_allocator, other.contiguous_allocator);
-		std::swap(entire_array_data, other.entire_array_data);
-		std::swap(current_dimension_array_size, other.current_dimension_array_size);
-		std::swap(current_dimension_array_data, other.current_dimension_array_data);
-		std::swap(this_level_array_head, other.this_level_array_head);
-		std::swap(this_level_array_tail, other.this_level_array_tail);
+		for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
+			(current_dimension_array_data + i)->swap(other[i]);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>

@@ -491,6 +491,8 @@ vla_array_2[0] = vla_array[0];
 
 10. `swap()`
 
+	僅交換內部值，不交換 `dynarray` 本身
+
 	```C++
 	vla::dynarray<int> vla_array_a(6, 20);
 	vla::dynarray<int> vla_array_b(5, 10);
