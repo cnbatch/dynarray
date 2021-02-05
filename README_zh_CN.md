@@ -6,7 +6,7 @@
 
 ## 依赖项
 
-C++ 17
+C++ 14 或 17
 
 C++ 标准库
 
@@ -17,6 +17,45 @@ C 语言自 C99 开始提供了 VLA，这是我最喜欢的 C 语言特性。C++
 VLA 最大的特点是，可以在连续的内存空间内使用动态定义的数组（多维数组也是这样），并且定义后该数组长度不变。`vector` 虽然可以做到相似的功能，例如使用自定义的 `allocator` 连续分配空间，但是对数组长度不再改变就没什么好办法，只能写个提醒告知后续使用者不要用 `push_back` 或 `emplace_back`。
 
 由于 `std:dynarray` 已经在C++14成为标准前删除了，所以这里我做了一个 `std::dynarray` 的扩充版本，为它提供多维数组（嵌套数组）功能。修改后的 `dynarray` 介于 VLA 和 `vector` 之间，既能保持像那样 VLA 连续分配空间，也能保持像 `vector` 那样使用 C++ 迭代器。
+
+# 文件说明	
+
+## `Doxyfile`	
+
+用于 doxygen 创建说明文档	
+
+## `dynarray.hpp`	
+
+原型版本，全局通用结构，占用内存相对较多。需要 C++17。	
+
+## `vla/dynarray.hpp`	
+
+模板特化过的版本，占用内存中等。只需 C++14。	
+
+## `vla/dynarray_lite.hpp`	
+
+极小化版本，不保证向多维数组提供连续的内存空间。需要 C++17。	
+
+## `vla/dynarray_mini.hpp`	
+
+`dynarray` 内部使用 `std::unique_ptr<[]>`，不保证向多维数组提供连续的内存空间，无法使用自定义分配器。需要 C++17。	
+
+# 版本对比	
+
+| 版本描述                        | 原型版本         | 模板偏特化            | Lite 版本                | Mini 版本                |	
+| --------------------------- | ------------ | ---------------- | ---------------------- | ---------------------- |	
+| 文件<sup>1</sup>                           | dynarray.hpp | vla/dynarray.hpp | vla/dynarray\_lite.hpp | vla/dynarray\_mini.hpp |	
+| C++需求                       | C++17        | C++14            | C++17                  | C++17                  |	
+| sizeof dynarray (最外层<sup>2</sup>)  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
+| sizeof dynarray (中层每个节点<sup>2</sup>)  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
+| sizeof dynarray (最内层每个节点<sup>2</sup>)| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
+| sizeof dynarray (一维数组)| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
+| 多维数组连续内存                    | 是            | 是                | 否                      | 否                      |	
+| 可以使用自定义分配器                | 是            | 是                | 是                      | 否                      |	
+
+<sup>1</sup> 请只使用其中一个 `.hpp` 文件。请勿全部都用。	
+
+<sup>2</sup> 多维数组	
 
 # 使用方法
 
@@ -244,6 +283,16 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array(200, 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
 ```
 
+也可以直接这样来：	
+
+```C++	
+template<typename T>	
+class your_allocator { /* ...... */ };	
+vla::dynarray<int, your_allocator> my_array_1(200);	
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200, 100);	
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);	
+```
+
 注意事项：所有分配器来源都必须相同，否则会无法编译。以下是**错误例子**
 
 ```C++
@@ -276,10 +325,8 @@ vla_array = vla_array_2;	// do nothing
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 ```
-| vla_array |
-| - |
 
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
@@ -288,10 +335,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 |[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 
-| vla_array_2 |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|
+|vla_array_2|[x][0]|[x][1]|[x][2]|
 | - | - | - | - |
 |[0][y]| 5 | 5 | 5 |
 |[1][y]| 5 | 5 | 5 |
@@ -302,10 +346,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 vla_array = vla_array_2;
 ```
 
-| vla_array |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 5 | 5 | 5 | 0 | 0 | 0 |
 |[1][y]| 5 | 5 | 5 | 0 | 0 | 0 |
@@ -323,10 +364,7 @@ vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 ```
 
-| vla_array |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
@@ -335,10 +373,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 |[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 
-| vla_array_2 |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|
+|vla_array_2|[x][0]|[x][1]|[x][2]|
 | - | - | - | - |
 |[0][y]| 5 | 5 | 5 |
 |[1][y]| 5 | 5 | 5 |
@@ -349,10 +384,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 vla_array[2] = vla_array_2[2];
 ```
 
-| vla_array |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
@@ -366,10 +398,7 @@ vla_array[2] = vla_array_2[2];
 vla_array_2[0] = vla_array[0];
 ```
 
-| vla_array_2 |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|
+|vla_array_2|[x][0]|[x][1]|[x][2]|
 | - | - | - | - |
 |[0][y]| 0 | 0 | 0 |
 |[1][y]| 5 | 5 | 5 |
@@ -443,10 +472,43 @@ vla_array_2[0] = vla_array[0];
 	仅交换内部值，不交换 `dynarray` 本身
 	
 	```C++
-	vla::dynarray<int> vla_array_a(6, 20);
-	vla::dynarray<int> vla_array_b(5, 10);
+	vla::dynarray<vla::dynarray<int>> vla_array_a(6, 6, 1);
+	vla::dynarray<vla::dynarray<int>> vla_array_b(3, 3, 5);
+	```
+	|vla_array_a|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+	| - | - | - | - | - | - | - |
+	|[0][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[1][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[2][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[3][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[4][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[5][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+
+	|vla_array_b|[x][0]|[x][1]|[x][2]|
+	| - | - | - | - |
+	|[0][y]| 5 | 5 | 5 |
+	|[1][y]| 5 | 5 | 5 |
+	|[2][y]| 5 | 5 | 5 |
+
+	***
+	```C++
 	vla_array_a.swap(vla_array_b);
 	```
+
+	|vla_array_a|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+	| - | - | - | - | - | - | - |
+	|[0][y]| 5 | 5 | 5 | 1 | 1 | 1 |
+	|[1][y]| 5 | 5 | 5 | 1 | 1 | 1 |
+	|[2][y]| 5 | 5 | 5 | 1 | 1 | 1 |
+	|[3][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[4][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[5][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+
+	|vla_array_b|[x][0]|[x][1]|[x][2]|
+	| - | - | - | - |
+	|[0][y]| 1 | 1 | 1 |
+	|[1][y]| 1 | 1 | 1 |
+	|[2][y]| 1 | 1 | 1 |
 
 11. `fill()`
 	```C++
@@ -470,6 +532,9 @@ vla_array_2[0] = vla_array[0];
 
 
 # 内部设计
+
+## 原型版本
+
 对于多层 dynarray，先由最外层 dynarray 在内存中分配一块连续的数组空间，大小由用户提供。然后再分配内部 dynarray 管理节点，这些内部各 dynarray 拥有头尾指针，按照顺序、大小指向正确的位置。
 
 单层 dynarray 是多层 dynarray 的简化版。
@@ -477,6 +542,18 @@ vla_array_2[0] = vla_array[0];
 ![单层dynarray](images/vla_dynarray_single.png)
 
 ![多层dynarray](images/vla_dynarray_nested.png)
+
+## `vla/dynarray.hpp`	
+
+![单层dynarray](images/vla_dynarray_single_size_optimised.png)	
+
+![多层dynarray](images/vla_dynarray_nested_size_optimised.png)	
+
+## `vla/dynarray_lite.hpp`	
+
+![单层dynarray](images/vla_dynarray_single_lite.png)	
+
+![多层dynarray](images/vla_dynarray_nested_lite.png)
 
 ## 最关键的一行代码
 

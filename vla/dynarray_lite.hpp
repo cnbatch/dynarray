@@ -52,8 +52,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
 
 #pragma once
-#ifndef _VLA_DYNARRAY_
-#define _VLA_DYNARRAY_
+#ifndef _VLA_DYNARRAY_LITE_
+#define _VLA_DYNARRAY_LITE_
 
 #include <cstdlib>
 #include <initializer_list>
@@ -929,9 +929,9 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, _Allocator>::move_array(dynarray &other)
 	{
-		std::swap(array_allocator, other.array_allocator);
-		std::swap(current_dimension_array_size, other.current_dimension_array_size);
-		std::swap(current_dimension_array_data, other.current_dimension_array_data);
+		array_allocator = other.array_allocator;
+		current_dimension_array_size = other.current_dimension_array_size;
+		current_dimension_array_data = other.current_dimension_array_data;
 		other.initialise();
 	}
 
@@ -1011,4 +1011,4 @@ namespace vla
 }	// namespace vla
 
 
-#endif //_VLA_DYNARRAY_
+#endif //_VLA_DYNARRAY_LITE_

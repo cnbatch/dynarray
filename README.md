@@ -340,10 +340,8 @@ vla_array = vla_array_2;	// do nothing
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 ```
-| vla_array |
-| - |
 
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
@@ -352,10 +350,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 |[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 
-| vla_array_2 |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|
+|vla_array_2|[x][0]|[x][1]|[x][2]|
 | - | - | - | - |
 |[0][y]| 5 | 5 | 5 |
 |[1][y]| 5 | 5 | 5 |
@@ -366,10 +361,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 vla_array = vla_array_2;
 ```
 
-| vla_array |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 5 | 5 | 5 | 0 | 0 | 0 |
 |[1][y]| 5 | 5 | 5 | 0 | 0 | 0 |
@@ -387,10 +379,7 @@ vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 ```
 
-| vla_array |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
@@ -399,10 +388,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 |[4][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[5][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 
-| vla_array_2 |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|
+|vla_array_2|[x][0]|[x][1]|[x][2]|
 | - | - | - | - |
 |[0][y]| 5 | 5 | 5 |
 |[1][y]| 5 | 5 | 5 |
@@ -413,10 +399,7 @@ vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
 vla_array[2] = vla_array_2[2];
 ```
 
-| vla_array |
-| - |
-
-|   |[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+|vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 | - | - | - | - | - | - | - |
 |[0][y]| 0 | 0 | 0 | 0 | 0 | 0 |
 |[1][y]| 0 | 0 | 0 | 0 | 0 | 0 |
@@ -509,10 +492,46 @@ vla_array_2[0] = vla_array[0];
 	Swap internal values only. `dynarray` itself keeps unchanged.
 
 	```C++
-	vla::dynarray<int> vla_array_a(6, 20);
-	vla::dynarray<int> vla_array_b(5, 10);
+	vla::dynarray<vla::dynarray<int>> vla_array_a(6, 6, 1);
+	vla::dynarray<vla::dynarray<int>> vla_array_b(3, 3, 5);
+	```
+
+	|vla_array_a|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+	| - | - | - | - | - | - | - |
+	|[0][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[1][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[2][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[3][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[4][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[5][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+
+	|vla_array_b|[x][0]|[x][1]|[x][2]|
+	| - | - | - | - |
+	|[0][y]| 5 | 5 | 5 |
+	|[1][y]| 5 | 5 | 5 |
+	|[2][y]| 5 | 5 | 5 |
+
+	***
+	```C++
 	vla_array_a.swap(vla_array_b);
 	```
+
+	|vla_array_a|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
+	| - | - | - | - | - | - | - |
+	|[0][y]| 5 | 5 | 5 | 1 | 1 | 1 |
+	|[1][y]| 5 | 5 | 5 | 1 | 1 | 1 |
+	|[2][y]| 5 | 5 | 5 | 1 | 1 | 1 |
+	|[3][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[4][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+	|[5][y]| 1 | 1 | 1 | 1 | 1 | 1 |
+
+	|vla_array_b|[x][0]|[x][1]|[x][2]|
+	| - | - | - | - |
+	|[0][y]| 1 | 1 | 1 |
+	|[1][y]| 1 | 1 | 1 |
+	|[2][y]| 1 | 1 | 1 |
+
+***
 
 11. `fill()`
 	```C++

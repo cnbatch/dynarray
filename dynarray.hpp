@@ -1394,13 +1394,13 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, _Allocator>::move_array(dynarray &other)
 	{
-		std::swap(array_allocator, other.array_allocator);
-		std::swap(contiguous_allocator, other.contiguous_allocator);
-		std::swap(entire_array_data, other.entire_array_data);
-		std::swap(current_dimension_array_size, other.current_dimension_array_size);
-		std::swap(current_dimension_array_data, other.current_dimension_array_data);
-		std::swap(this_level_array_head, other.this_level_array_head);
-		std::swap(this_level_array_tail, other.this_level_array_tail);
+		array_allocator = other.array_allocator;
+		contiguous_allocator = other.contiguous_allocator;
+		entire_array_data = other.entire_array_data;
+		current_dimension_array_size = other.current_dimension_array_size;
+		current_dimension_array_data = other.current_dimension_array_data;
+		this_level_array_head = other.this_level_array_head;
+		this_level_array_tail = other.this_level_array_tail;
 		other.reset();
 	}
 
