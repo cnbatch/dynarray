@@ -48,16 +48,18 @@ VLA 最大的特點是，可以在連續的記憶體空間內使用動態定義�
 | --------------------------- | :----------: | :--------------: | :--------------------: | :--------------------: |
 | 檔案<sup>1</sup>                        | dynarray.hpp | vla/dynarray.hpp | vla/dynarray\_lite.hpp | vla/dynarray\_mini.hpp |
 | C++需求                    | C++17        | C++14            | C++17                  | C++17                  |
-| sizeof dynarray \(最外層<sup>2</sup>\)  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(中層每個節點<sup>2</sup>\)  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(最內層每個節點<sup>2</sup>\) | 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(一維數組\) | 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(最外層<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(中層每個節點<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(最內層每個節點<sup>2</sup>\)<sup>3</sup> | 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(一維數組\)<sup>3</sup> | 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |
 | 多維數組連續記憶體空間              | 是            | 是                | 否                      | 否                      |
 | 可以使用自訂分配器                  | 是            | 是                | 是                      | 否                      |
 
 <sup>1</sup> 請祇使用其中一個 `.hpp` 檔案。請勿全部都用。
 
 <sup>2</sup> 多維數組
+
+<sup>3</sup> 對齊後
 
 # 使用方法
 

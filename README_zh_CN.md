@@ -48,16 +48,18 @@ VLA 最大的特点是，可以在连续的内存空间内使用动态定义的�
 | --------------------------- | :----------: | :--------------: | :--------------------: | :--------------------: |	
 | 文件<sup>1</sup>                           | dynarray.hpp | vla/dynarray.hpp | vla/dynarray\_lite.hpp | vla/dynarray\_mini.hpp |	
 | C++需求                       | C++17        | C++14            | C++17                  | C++17                  |	
-| sizeof dynarray \(最外层<sup>2</sup>\)  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
-| sizeof dynarray \(中层每个节点<sup>2</sup>\)  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
-| sizeof dynarray \(最内层每个节点<sup>2</sup>\)| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
-| sizeof dynarray \(一维数组\)| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
+| sizeof dynarray \(最外层<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
+| sizeof dynarray \(中层每个节点<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
+| sizeof dynarray \(最内层每个节点<sup>2</sup>\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
+| sizeof dynarray \(一维数组\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
 | 多维数组连续内存                    | 是            | 是                | 否                      | 否                      |	
 | 可以使用自定义分配器                | 是            | 是                | 是                      | 否                      |	
 
 <sup>1</sup> 请只使用其中一个 `.hpp` 文件。请勿全部都用。	
 
-<sup>2</sup> 多维数组	
+<sup>2</sup> 多维数组
+
+<sup>3</sup> 对齐后
 
 # 使用方法
 

@@ -60,16 +60,18 @@ Requires C++17.
 | ---------------------------------------------------- | :-----------------: | :-----------------------------: | :--------------------: | :--------------------: |
 | File<sup>1</sup>                                     | dynarray.hpp        | vla/dynarray.hpp                | vla/dynarray\_lite.hpp | vla/dynarray\_mini.hpp |
 | C++ Version                                          | C++17               | C++14                           | C++17                  | C++17                  |
-| sizeof dynarray \(Outermost<sup>2</sup>\)            | 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(middle layer per node<sup>2</sup>\)| 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(Innermost per node<sup>2</sup>\)   | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(one-dimensional array\)            | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(Outermost<sup>2</sup>\)<sup>3</sup>            | 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(middle layer per node<sup>2</sup>\)<sup>3</sup>| 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(Innermost per node<sup>2</sup>\)<sup>3</sup>   | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
+| sizeof dynarray \(one-dimensional array\)<sup>3</sup>            | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
 | contiguous memory spaces for multi-dimensional array | Yes                 | Yes                             | No                     | No                     |
 | custom allocator can be used                         | Yes                 | Yes                             | Yes                    | No                     |
 
 <sup>1</sup> Use one of the `.hpp` file only. Please don't use them all at the same time.
 
 <sup>2</sup> Multi-dimensional array
+
+<sup>3</sup> Aligned
 
 # How to use
 
