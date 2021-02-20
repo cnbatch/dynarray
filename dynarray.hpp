@@ -1036,8 +1036,6 @@ namespace vla
 		{
 			each_block_size = internal_impl::expand_parameters(std::forward<Args>(args)...);
 			contiguous_allocator = expand_allocators(std::forward<Args>(args)...);
-			std::initializer_list<size_type> all_args = { static_cast<size_type>(args)... };
-			each_block_size = std::accumulate(all_args.begin(), all_args.end(), each_block_size, std::multiplies<size_type>());
 
 			current_dimension_array_size = count;
 			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
