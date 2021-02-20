@@ -975,8 +975,9 @@ namespace vla
 	inline void dynarray<T, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
 	{
 		static_assert(std::is_same_v<T, internal_value_type> ||
-			std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator>,
-			"invalid iterator, cannot convert to a valid dynarray");
+		              std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator> ||
+		              std::is_same_v<InputIterator, reverse_iterator> || std::is_same_v<InputIterator, const_reverse_iterator>,
+		              "invalid iterator, cannot convert to a valid dynarray");
 		
 		size_type count = static_cast<size_type>(std::abs(other_end - other_begin));
 		if (count == 0) return;
@@ -1864,7 +1865,7 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename _Alloc_t, typename, typename ...Args>
 	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count,
-		                                                _Alloc_t &&other_allocator, Args&& ... args)
+	                                                                          _Alloc_t &&other_allocator, Args&& ... args)
 	{
 		entire_array_data = nullptr;	// always nullptr in nested-dynarray
 		array_allocator = other_allocator;
@@ -2087,8 +2088,9 @@ namespace vla
 	template<typename InputIterator>
 	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
 	{
-		static_assert(std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator>,
-			"invalid iterator, cannot convert to a valid dynarray");
+		static_assert(std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator> ||
+		              std::is_same_v<InputIterator, reverse_iterator> || std::is_same_v<InputIterator, const_reverse_iterator>,
+		              "invalid iterator, cannot convert to a valid dynarray");
 
 		size_type count = static_cast<size_type>(std::abs(other_end - other_begin));
 		if (count == 0) return;
