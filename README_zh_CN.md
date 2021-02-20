@@ -30,30 +30,34 @@ VLA 最大的特点是，可以在连续的内存空间内使用动态定义的�
 
 原型版本，全局通用结构，占用内存相对较多。需要 C++17。	
 
-## `vla/dynarray.hpp`	
+## `vla_nest/dynarray.hpp`	
 
 模板特化过的版本，占用内存中等。只需 C++14。	
 
-## `vla/dynarray_lite.hpp`	
+## `vla_nest/dynarray_lite.hpp`	
 
 极小化版本，不保证向多维数组提供连续的内存空间。需要 C++17。	
 
-## `vla/dynarray_mini.hpp`	
+## `vla_nest/dynarray_mini.hpp`	
 
 `dynarray` 内部使用 `std::unique_ptr<[]>`，不保证向多维数组提供连续的内存空间，无法使用自定义分配器。需要 C++17。	
 
+## `vla_neat/dynarray.hpp`
+
+干净整洁版，外观上非嵌套版本（内部实现仍然嵌套）。使用方式不同于上述几个。需要C++17。
+
 # 版本对比	
 
-| 版本描述                        | 原型版本         | 模板偏特化            | Lite 版本                | Mini 版本                |	
-| --------------------------- | :----------: | :--------------: | :--------------------: | :--------------------: |	
-| 文件<sup>1</sup>                           | dynarray.hpp | vla/dynarray.hpp | vla/dynarray\_lite.hpp | vla/dynarray\_mini.hpp |	
-| C++需求                       | C++17        | C++14            | C++17                  | C++17                  |	
-| sizeof dynarray \(最外层<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
-| sizeof dynarray \(中层每个节点<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |	
-| sizeof dynarray \(最内层每个节点<sup>2</sup>\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
-| sizeof dynarray \(一维数组\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |	
-| 多维数组连续内存                    | 是            | 是                | 否                      | 否                      |	
-| 可以使用自定义分配器                | 是            | 是                | 是                      | 否                      |	
+| 版本描述                        | 原型版本         | 模板偏特化            | Lite 版本                | Mini 版本                | 干净整洁版 |
+| --------------------------- | :----------: | :--------------: | :--------------------: | :--------------------: |	:-:|
+| 文件<sup>1</sup>                           | dynarray.hpp | vla\_nest/dynarray.hpp | vla\_nest/dynarray\_lite.hpp | vla\_nest/dynarray\_mini.hpp | vla\_cleanlily/dynarray.hpp |
+| C++需求                       | C++17        | C++14            | C++17                  | C++17                  |	|
+| sizeof dynarray \(最外层<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |48 bytes|
+| sizeof dynarray \(中层每个节点<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |48 bytes|
+| sizeof dynarray \(最内层每个节点<sup>2</sup>\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |32 bytes|
+| sizeof dynarray \(一维数组\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |32 bytes|
+| 多维数组连续内存                    | 是            | 是                | 否                      | 否                      | 是 |
+| 可以使用自定义分配器                | 是            | 是                | 是                      | 否                      |	是 |
 
 <sup>1</sup> 请只使用其中一个 `.hpp` 文件。请勿全部都用。	
 
@@ -62,6 +66,8 @@ VLA 最大的特点是，可以在连续的内存空间内使用动态定义的�
 <sup>3</sup> 对齐后
 
 # 使用方法
+
+原型版本及各种“嵌套”外观版本：
 
 ```C++
 #include <iostream>
@@ -72,6 +78,23 @@ int main()
     int x = 100, y = 200;
     int value = 5;
     vla::dynarray<vla::dynarray<int>> vla_array(x, y, value);
+    std::cout << vla_array[8][16] << std::endl;    // 5
+    vla_array[8][16] = 20;
+    std::cout << vla_array[8][16] << std::endl;    // 20
+}
+```
+
+干净整洁版：
+
+```C++
+#include <iostream>
+#include "dynarray.hpp"
+
+int main()
+{
+    int x = 100, y = 200;
+    int value = 5;
+    vla::dynarray<int, 2> vla_array(x, y, value);
     std::cout << vla_array[8][16] << std::endl;    // 5
     vla_array[8][16] = 20;
     std::cout << vla_array[8][16] << std::endl;    // 20
@@ -92,6 +115,14 @@ int vla_array[count];
 memset(vla_array, 0, sizeof vla_array);
 ```
 
+对于干净整洁版本，可以写
+
+```C++
+int count = 100;
+vla::dynarray<int> vla_array(count);
+vla::dynarray<int, 1> vla_array_other(count);
+```
+
 2. 创建数组时指定初始值
 ```C++
 int count = 100;
@@ -105,12 +136,21 @@ memset(vla_array, 256, sizeof vla_array);
 ```
 
 3. 创建零大小数组
+
 ```C++
 vla::dynarray<int> vla_array;
 ```
+
 或
+
 ```C++
 vla::dynarray<int> vla_array(0); 
+```
+
+或（仅限干净整洁版）
+
+```C++
+vla::dynarray<int, 0> vla_array;
 ```
 
 4. 用另一个数组初始化或者替换当前数组
@@ -148,32 +188,58 @@ vla::dynarray<int> vla_array_b(vla_array_a.begin() + 20, vla_array_a.end());
 
 ## 创建二维数组
 1. 用变量大小创建数组
+
+嵌套版：
+
 ```C++
 int x = 100, y = 200;
 vla::dynarray<vla::dynarray<int>> vla_array(x, y); 
 ```
+
 相当于
+
 ```C
 int x = 100, y = 200;
 int vla_array[x][y];
 memset(vla_array, 0, sizeof vla_array);
 ```
 
+干净整洁版：
+
+```C++
+int x = 100, y = 200;
+vla::dynarray<int, 2> vla_array(x, y); 
+```
+
 2. 创建数组时指定初始值
+
+嵌套版：
+
 ```C++
 int x = 100, y = 200;
 vla::dynarray<vla::dynarray<int>> vla_array(x, y, 256); // 初始值256
 ```
+
 相当于
+
 ```C
 int x = 100, y = 200;
 int vla_array[x][y];
 memset(vla_array, 256, sizeof vla_array);
 ```
 
+干净整洁版：
+
+```C++
+int x = 100, y = 200;
+vla::dynarray<int, 2> vla_array(x, y, 256); 
+```
+
 3. 创建零大小数组
 
 只要给出的参数个数少于实际维度，或者维度参数中其中一个为零，都可以创建零大小数组
+
+嵌套版：
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array;
@@ -191,7 +257,28 @@ vla::dynarray<vla::dynarray<int>> vla_array(30, 0);
 vla::dynarray<vla::dynarray<int>> vla_array(0, 5); 
 ```
 
+干净整洁版：
+
+```C++
+vla::dynarray<int, 2> vla_array;
+```
+或
+```C++
+vla::dynarray<int, 2> vla_array(0); 
+```
+或
+```C++
+vla::dynarray<int, 2> vla_array(30, 0); 
+```
+或
+```C++
+vla::dynarray<int, 2> vla_array(0, 5); 
+```
+
 4. 用另一个数组初始化或者替换当前数组
+
+嵌套版：
+
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(vla::dynarray<vla::dynarray<int>>(100, 200));
 ```
@@ -205,20 +292,60 @@ vla::dynarray<vla::dynarray<int>> vla_array_b(100, 200);
 vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
 ```
 
+干净整洁版：
+
+```C++
+vla::dynarray<int, 2> vla_array(vla::dynarray<int, 2>(100, 200));
+```
+```C++
+vla::dynarray<int, 2> vla_array_a(100, 300);
+vla::dynarray<int, 2> vla_array_b(vla_array_a);
+```
+```C++
+vla::dynarray<int, 2> vla_array_a(100, 200, 10);
+vla::dynarray<int, 2> vla_array_b(100, 200);
+vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
+```
+
 5. 使用初始化列表
+
+	嵌套版：
+
 	- 创建 3 × 3 数组
 	```C++
 	vla::dynarray<vla::dynarray<int>> array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
 	```
 	- 创建 3 × 3 数组
 	```C++
-	vla::dynarray<vla::dynarray<int>> array33;
+	vla::dynarray<vla::dynarray<int>> array33(3, 3);
 	array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
 	```
 	- 创建不定长度大小数组
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array = { {10, 100, 1000}, {1, 3, 5}, {0, 3} };
 	```
+
+	干净整洁版：
+
+	- 创建 3 × 3 数组
+	```C++
+	vla::dynarray<int, 2> array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
+	```
+	- 创建 3 × 3 数组
+	```C++
+	vla::dynarray<int, 2> array33(3, 3);
+	array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
+	```
+	或
+	```C++
+	vla::dynarray<int, 2> array33(3, 3);
+	array33 = { 1, 2, 3, 3, 2, 1, 2, 4, 6 };	// 如同 C-style array
+	```
+	- 创建不定长度大小数组
+	```C++
+	vla::dynarray<int, 2> vla_array = { {10, 100, 1000}, {1, 3, 5}, {0, 3} };
+	```
+
 	在这个例子中
 
 	`vla_array.size() == 3`
@@ -242,11 +369,22 @@ vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
 
 以下均为零大小数组：
 
+嵌套版：
+
 ```C++
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array;
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_a(100);
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_b(vla_array_a);
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_c(100, 200);
+```
+
+干净整洁版：
+
+```C++
+vla::dynarray<int, 3> vla_array;
+vla::dynarray<int, 3> vla_array_a(100);
+vla::dynarray<int, 3> vla_array_b(vla_array_a);
+vla::dynarray<int, 3> vla_array_c(100, 200);
 ```
 
 ## 使用自定义分配器
@@ -270,12 +408,22 @@ std::vector<int, your_allocator<int>> my_vec(100, my_alloc);
 ```
 
 但 `vla::dynarray` 用起来不一样，尖括号内传递模板名 `your_allocator`
+
+嵌套版：
+
 ```C++
 your_allocator<int> my_alloc(/* sth */);
 vla::dynarray<int, your_allocator> my_array(100, my_alloc);
 ```
 
-多维数组会比较繁琐
+干净整洁版：
+
+```C++
+your_allocator<int> my_alloc(/* sth */);
+vla::dynarray<int, 1, your_allocator> my_array(100, my_alloc);
+```
+
+嵌套版多维数组会比较繁琐
 
 ```C++
 your_allocator<int> my_alloc(/* sth */);
@@ -297,7 +445,21 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);	
 ```
 
+干净整洁版多维数组就好得多
+
+```C++
+your_allocator<int> my_alloc(/* sth */);
+your_allocator<vla::dynarray<int, 1, your_allocator>> my_alloc_2(/* sth */);
+
+vla::dynarray<int, 2, your_allocator> my_array(200, my_alloc_2,
+                                               100, my_alloc);
+
+vla::dynarray<int, 2, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
+```
+
 注意事项：所有分配器来源都必须相同，否则会无法编译。以下是**错误例子**
+
+嵌套版：
 
 ```C++
 std::allocator<int> std_alloc(/* sth */);
@@ -306,6 +468,17 @@ your_allocator<vla::dynarray<int, std::allocator>> my_alloc_2(/* sth */);
 // cannot compile
 vla::dynarray<vla::dynarray<int, std::allocator>, your_allocator> my_array(200, my_alloc_2,
                                                                            100, std_alloc);
+```
+
+干净整洁版：
+
+```C++
+std::allocator<int> std_alloc(/* sth */);
+your_allocator<vla::dynarray<int, 1, std::allocator>> my_alloc_2(/* sth */);
+
+// cannot compile
+vla::dynarray<int, 2, std::allocator> my_array(200, my_alloc_2,
+                                               100, std_alloc);
 ```
 
 ## `operator=` 的行为
@@ -325,9 +498,18 @@ vla_array = vla_array_2;	// do nothing
 
 * 示例1
 
+嵌套版：
+
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
+```
+
+干净整洁版：
+
+```C++
+vla::dynarray<int, 2> vla_array(6, 6);
+vla::dynarray<int, 2> vla_array_2(3, 3, 5);
 ```
 
 |vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
@@ -363,9 +545,18 @@ vla_array = vla_array_2;
 
 * 示例2
 
+嵌套版：
+
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
+```
+
+干净整洁版：
+
+```C++
+vla::dynarray<int, 2> vla_array(6, 6);
+vla::dynarray<int, 2> vla_array_2(3, 3, 5);
 ```
 
 |vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
@@ -420,6 +611,11 @@ vla_array_2[0] = vla_array[0];
 	vla::dynarray<vla::dynarray<int>> vla_array(5, 5, 10);
 	int number = vla_array[2][2];
 	```
+	或
+	```C++
+	vla::dynarray<int, 2> vla_array(5, 5, 10);
+	int number = vla_array[2][2];
+	```
 
 3. `front()`
 	```C++
@@ -443,10 +639,20 @@ vla_array_2[0] = vla_array[0];
 	vla::dynarray<vla::dynarray<int>> vla_array(5, 5, 10);
 	int *raw_array = vla_array.data();
 	```
+	或
+	```C++
+	vla::dynarray<int, 2> vla_array(5, 5, 10);
+	int *raw_array = vla_array.data();
+	```
 
 6. `get()`
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array(5, 5, 10);
+	vla::dynarray<int> *raw_array = vla_array.get();
+	```
+	或
+	```C++
+	vla::dynarray<int, 2> vla_array(5, 5, 10);
 	vla::dynarray<int> *raw_array = vla_array.get();
 	```
 
@@ -479,6 +685,12 @@ vla_array_2[0] = vla_array[0];
 	vla::dynarray<vla::dynarray<int>> vla_array_a(6, 6, 1);
 	vla::dynarray<vla::dynarray<int>> vla_array_b(3, 3, 5);
 	```
+	或
+	```C++
+	vla::dynarray<int, 2> vla_array_a(6, 6, 1);
+	vla::dynarray<int, 2> vla_array_b(3, 3, 5);
+	```
+
 	|vla_array_a|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
 	| :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 	|**[0][y]**| 1 | 1 | 1 | 1 | 1 | 1 |
@@ -523,6 +735,11 @@ vla_array_2[0] = vla_array[0];
 
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array(100, 100);
+	vla_array.fill(256);	// all elements in all dimension have value 256
+	```
+	或
+	```C++
+	vla::dynarray<int, 2> vla_array(100, 100);
 	vla_array.fill(256);	// all elements in all dimension have value 256
 	```
 

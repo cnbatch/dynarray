@@ -36,36 +36,42 @@ Proterotype version, use the same structure (class) all the time. The size is la
 
 Requires C++17.
 
-## `vla/dynarray.hpp`
+## `vla_nest/dynarray.hpp`
 
 Template specialised version. Medium size.
 
 Requires C++14.
 
-## `vla/dynarray_lite.hpp`
+## `vla_nest/dynarray_lite.hpp`
 
 Lite version, does not guaranteed to provide contiguous memory spaces for multi-dimensional array.
 
 Requires C++17.
 
-## `vla/dynarray_mini.hpp`
+## `vla_nest/dynarray_mini.hpp`
 
 Using `std::unique_ptr<[]>` inside the `dynarray`, does not guaranteed to provide contiguous memory spaces for multi-dimensional array. Custom allocator cannot be used in this version.
 
 Requires C++17.
 
+## `vla_neat/dynarray.hpp`
+
+Non-nested version from the appearance. The internal implementation is a nested-array as before. The usage is difference from above implementations.
+
+Requires C++17.
+
 # Version comparison
 
-| Version Description                                  | Proterotype version | Partial template specialisation | Lite Version           | Mini Version           |
-| ---------------------------------------------------- | :-----------------: | :-----------------------------: | :--------------------: | :--------------------: |
-| File<sup>1</sup>                                     | dynarray.hpp        | vla/dynarray.hpp                | vla/dynarray\_lite.hpp | vla/dynarray\_mini.hpp |
-| C++ Version                                          | C++17               | C++14                           | C++17                  | C++17                  |
-| sizeof dynarray \(Outermost<sup>2</sup>\)<sup>3</sup>            | 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(middle layer per node<sup>2</sup>\)<sup>3</sup>| 48 bytes            | 48 bytes                        | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(Innermost per node<sup>2</sup>\)<sup>3</sup>   | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
-| sizeof dynarray \(one-dimensional array\)<sup>3</sup>            | 48 bytes            | 32 bytes                        | 24 bytes               | 16 bytes               |
-| contiguous memory spaces for multi-dimensional array | Yes                 | Yes                             | No                     | No                     |
-| custom allocator can be used                         | Yes                 | Yes                             | Yes                    | No                     |
+| Version Description                                              | Proterotype version | Partial template specialisation | Lite Version                 | Mini Version                 | Neat Version           |
+| ---------------------------------------------------------------- | :-----------------: | :-----------------------------: | :--------------------------: | :--------------------------: |:----------------------:|
+| File<sup>1</sup>                                                 | dynarray.hpp        | vla\_nest/dynarray.hpp          | vla\_nest/dynarray\_lite.hpp | vla\_nest/dynarray\_mini.hpp | vla\_neat/dynarray.hpp |
+| C++ Version                                                      | C++17               | C++14                           | C++17                        | C++17                        | C++17                  |
+| sizeof dynarray \(Outermost<sup>2</sup>\)<sup>3</sup>            | 48 bytes            | 48 bytes                        | 24 bytes                     | 16 bytes                     | 48 bytes               |
+| sizeof dynarray \(middle layer per node<sup>2</sup>\)<sup>3</sup>| 48 bytes            | 48 bytes                        | 24 bytes                     | 16 bytes                     | 48 bytes               |
+| sizeof dynarray \(Innermost per node<sup>2</sup>\)<sup>3</sup>   | 48 bytes            | 32 bytes                        | 24 bytes                     | 16 bytes                     | 32 bytes               |
+| sizeof dynarray \(one-dimensional array\)<sup>3</sup>            | 48 bytes            | 32 bytes                        | 24 bytes                     | 16 bytes                     | 32 bytes               |
+| contiguous memory spaces for multi-dimensional array             | Yes                 | Yes                             | No                           | No                           | Yes                    |
+| custom allocator can be used                                     | Yes                 | Yes                             | Yes                          | No                           | Yes                    |
 
 <sup>1</sup> Use one of the `.hpp` file only. Please don't use them all at the same time.
 
@@ -74,6 +80,8 @@ Requires C++17.
 <sup>3</sup> Aligned
 
 # How to use
+
+Proterotype and each ‘Nest’ Versions:
 
 ```C++
 #include <iostream>
@@ -84,6 +92,23 @@ int main()
     int x = 100, y = 200;
     int value = 5;
     vla::dynarray<vla::dynarray<int>> vla_array(x, y, value);
+    std::cout << vla_array[8][16] << std::endl;    // 5
+    vla_array[8][16] = 20;
+    std::cout << vla_array[8][16] << std::endl;    // 20
+}
+```
+
+Neat Version:
+
+```C++
+#include <iostream>
+#include "dynarray.hpp"
+
+int main()
+{
+    int x = 100, y = 200;
+    int value = 5;
+    vla::dynarray<int, 2> vla_array(x, y, value);
     std::cout << vla_array[8][16] << std::endl;    // 5
     vla_array[8][16] = 20;
     std::cout << vla_array[8][16] << std::endl;    // 20
@@ -104,6 +129,14 @@ int vla_array[count];
 memset(vla_array, 0, sizeof vla_array);
 ```
 
+For Neat Version, you can also
+
+```C++
+int count = 100;
+vla::dynarray<int> vla_array(count);
+vla::dynarray<int, 1> vla_array_other(count);
+```
+
 2. Create an array with initial value
 ```C++
 int count = 100;
@@ -117,12 +150,21 @@ memset(vla_array, 256, sizeof vla_array);
 ```
 
 3. Create a zero-size array
+
 ```C++
 vla::dynarray<int> vla_array;
 ```
+
 or
+
 ```C++
 vla::dynarray<int> vla_array(0); 
+```
+
+or (Neat Version only)
+
+```C++
+vla::dynarray<int, 0> vla_array;
 ```
 
 4. Initialise current dynarray or replace current dynarray with another dynarray
@@ -160,6 +202,9 @@ vla::dynarray<int> vla_array_b(vla_array_a.begin() + 20, vla_array_a.end());
 
 ## Create a 2D array
 1.  Create an array with variable
+
+Nest Versions:
+
 ```C++
 int x = 100, y = 200;
 vla::dynarray<vla::dynarray<int>> vla_array(x, y); 
@@ -171,21 +216,42 @@ int vla_array[x][y];
 memset(vla_array, 0, sizeof vla_array);
 ```
 
+Neat Version:
+
+```C++
+int x = 100, y = 200;
+vla::dynarray<int, 2> vla_array(x, y); 
+```
+
 2. Create an array with initial value
+
+Nest Versions:
+
 ```C++
 int x = 100, y = 200;
 vla::dynarray<vla::dynarray<int>> vla_array(x, y, 256); 
 ```
+
 Equivalent to
+
 ```C
 int x = 100, y = 200;
 int vla_array[x][y];
 memset(vla_array, 256, sizeof vla_array);
 ```
 
+Neat Version:
+
+```C++
+int x = 100, y = 200;
+vla::dynarray<int, 2> vla_array(x, y, 256); 
+```
+
 3. Create a zero-size array
 
 As long as the number of parameters is less than the actual dimension, or one of the size is set as zero, a zero-size array will be created.
+
+Nest Versions:
 
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array;
@@ -203,7 +269,28 @@ or
 vla::dynarray<vla::dynarray<int>> vla_array(0, 5); 
 ```
 
+Neat Version:
+
+```C++
+vla::dynarray<int, 2> vla_array;
+```
+or
+```C++
+vla::dynarray<int, 2> vla_array(0); 
+```
+or
+```C++
+vla::dynarray<int, 2> vla_array(30, 0); 
+```
+or
+```C++
+vla::dynarray<int, 2> vla_array(0, 5); 
+```
+
 4. Initialise current dynarray or replace current dynarray with another dynarray
+
+Nest Versions:
+
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(vla::dynarray<vla::dynarray<int>>(100, 200));
 ```
@@ -217,20 +304,60 @@ vla::dynarray<vla::dynarray<int>> vla_array_b(100, 200);
 vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
 ```
 
+Neat Version:
+
+```C++
+vla::dynarray<int, 2> vla_array(vla::dynarray<int, 2>(100, 200));
+```
+```C++
+vla::dynarray<int, 2> vla_array_a(100, 300);
+vla::dynarray<int, 2> vla_array_b(vla_array_a);
+```
+```C++
+vla::dynarray<int, 2> vla_array_a(100, 200, 10);
+vla::dynarray<int, 2> vla_array_b(100, 200);
+vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
+```
+
 5. Initialization list
+
+	Nest Version:
+
 	- create 3 × 3 array
 	```C++
 	vla::dynarray<vla::dynarray<int>> array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
 	```
 	- create 3 × 3 array
 	```C++
-	vla::dynarray<vla::dynarray<int>> array33;
+	vla::dynarray<vla::dynarray<int>> array33(3, 3);
 	array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
 	```
 	- create a variable-length array
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array = { {10, 100, 1000}, {1, 3, 5}, {0, 3} };
 	```
+
+	Neat Version:
+
+	- create 3 × 3 array
+	```C++
+	vla::dynarray<int, 2> array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
+	```
+	- create 3 × 3 array
+	```C++
+	vla::dynarray<int, 2> array33(3, 3);
+	array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
+	```
+	or
+	```C++
+	vla::dynarray<int, 2> array33(3, 3);
+	array33 = { 1, 2, 3, 3, 2, 1, 2, 4, 6 };	// the same as C-style array
+	```
+	- create a variable-length array
+	```C++
+	vla::dynarray<int, 2> vla_array = { {10, 100, 1000}, {1, 3, 5}, {0, 3} };
+	```
+
 	In this example:
 
 	`vla_array.size() == 3`
@@ -254,11 +381,22 @@ Allow me to remind you again: as long as the number of parameters is less than t
 
 All of these are zero-size array:
 
+Nest Versions:
+
 ```C++
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array;
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_a(100);
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_b(vla_array_a);
 vla::dynarray<vla::dynarray<vla::dynarray<int>>> vla_array_c(100, 200);
+```
+
+Neat Version:
+
+```C++
+vla::dynarray<int, 3> vla_array;
+vla::dynarray<int, 3> vla_array_a(100);
+vla::dynarray<int, 3> vla_array_b(vla_array_a);
+vla::dynarray<int, 3> vla_array_c(100, 200);
 ```
 
 ## Use a custom allocator
@@ -283,12 +421,21 @@ std::vector<int, your_allocator<int>> my_vec(100, my_alloc);
 
 But `vla::dynarray` is not the same as above. You should place your template name `your_allocator` in the angle brackets.
 
+Nest Versions:
+
 ```C++
 your_allocator<int> my_alloc(/* sth */);
 vla::dynarray<int, your_allocator> my_array(100, my_alloc);
 ```
 
-It would be much more verbose for multi-dimensional array
+Neat Version:
+
+```C++
+your_allocator<int> my_alloc(/* sth */);
+vla::dynarray<int, 1, your_allocator> my_array(100, my_alloc);
+```
+
+It would be much more verbose for multi-dimensional array with Nest Versions
 
 ```C++
 your_allocator<int> my_alloc(/* sth */);
@@ -311,7 +458,21 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);
 ```
 
+Neat Version is much better
+
+```C++
+your_allocator<int> my_alloc(/* sth */);
+your_allocator<vla::dynarray<int, 1, your_allocator>> my_alloc_2(/* sth */);
+
+vla::dynarray<int, 2, your_allocator> my_array(200, my_alloc_2,
+                                               100, my_alloc);
+
+vla::dynarray<int, 2, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
+```
+
 Note: all of the allocators must come from the same source (template, class) or dynarray will not be compiled. **Incorrect Example:**
+
+Nest Versions:
 
 ```C++
 std::allocator<int> std_alloc(/* sth */);
@@ -320,6 +481,17 @@ your_allocator<vla::dynarray<int, std::allocator>> my_alloc_2(/* sth */);
 // cannot compile
 vla::dynarray<vla::dynarray<int, std::allocator>, your_allocator> my_array(200, my_alloc_2,
                                                                            100, std_alloc);
+```
+
+Neat Version:
+
+```C++
+std::allocator<int> std_alloc(/* sth */);
+your_allocator<vla::dynarray<int, 1, std::allocator>> my_alloc_2(/* sth */);
+
+// cannot compile
+vla::dynarray<int, 2, std::allocator> my_array(200, my_alloc_2,
+                                               100, std_alloc);
 ```
 
 ## Behaviour of `operator=`
@@ -338,9 +510,18 @@ vla_array = vla_array_2;	// do nothing
 
 * Example 1
 
+Nest Versions:
+
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
+```
+
+Neat Version:
+
+```C++
+vla::dynarray<int, 2> vla_array(6, 6);
+vla::dynarray<int, 2> vla_array_2(3, 3, 5);
 ```
 
 |vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
@@ -376,9 +557,18 @@ vla_array = vla_array_2;
 
 * Example 2
 
+Nest Versions:
+
 ```C++
 vla::dynarray<vla::dynarray<int>> vla_array(6, 6);
 vla::dynarray<vla::dynarray<int>> vla_array_2(3, 3, 5);
+```
+
+Neat Version:
+
+```C++
+vla::dynarray<int, 2> vla_array(6, 6);
+vla::dynarray<int, 2> vla_array_2(3, 3, 5);
 ```
 
 |vla_array|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
@@ -433,6 +623,11 @@ vla_array_2[0] = vla_array[0];
 	vla::dynarray<vla::dynarray<int>> vla_array(5, 5, 10);
 	int number = vla_array[2][2];
 	```
+	or
+	```C++
+	vla::dynarray<int, 2> vla_array(5, 5, 10);
+	int number = vla_array[2][2];
+	```
 
 3. `front()`
 	```C++
@@ -458,10 +653,20 @@ vla_array_2[0] = vla_array[0];
 	vla::dynarray<vla::dynarray<int>> vla_array(5, 5, 10);
 	int *raw_array = vla_array.data();
 	```
+	or
+	```C++
+	vla::dynarray<int, 2> vla_array(5, 5, 10);
+	int *raw_array = vla_array.data();
+	```
 
 6. `get()`
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array(5, 5, 10);
+	vla::dynarray<int> *raw_array = vla_array.get();
+	```
+	or
+	```C++
+	vla::dynarray<int, 2> vla_array(5, 5, 10);
 	vla::dynarray<int> *raw_array = vla_array.get();
 	```
 
@@ -493,6 +698,11 @@ vla_array_2[0] = vla_array[0];
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array_a(6, 6, 1);
 	vla::dynarray<vla::dynarray<int>> vla_array_b(3, 3, 5);
+	```
+	or
+	```C++
+	vla::dynarray<int, 2> vla_array_a(6, 6, 1);
+	vla::dynarray<int, 2> vla_array_b(3, 3, 5);
 	```
 
 	|vla_array_a|[x][0]|[x][1]|[x][2]|[x][3]|[x][4]|[x][5]|
@@ -541,6 +751,11 @@ vla_array_2[0] = vla_array[0];
 	
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array(100, 100);
+	vla_array.fill(256);	// all elements in all dimension have value 256
+	```
+	or
+	```C++
+	vla::dynarray<int, 2> vla_array(100, 100);
 	vla_array.fill(256);	// all elements in all dimension have value 256
 	```
 
