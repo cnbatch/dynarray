@@ -444,17 +444,6 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array(200, 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
 ```
 
-You can also do this directly:
-
-```C++
-template<typename T>
-class your_allocator { /* ...... */ };
-
-vla::dynarray<int, your_allocator> my_array_1(200);
-vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200, 100);
-vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);
-```
-
 Neat Version is much better
 
 ```C++
@@ -465,6 +454,27 @@ vla::dynarray<int, 2, your_allocator> my_array(200, my_alloc_2,
                                                100, my_alloc);
 
 vla::dynarray<int, 2, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
+```
+
+You can also do this directly:
+
+Nest Versions:
+
+```C++
+template<typename T>
+class your_allocator { /* ...... */ };
+
+vla::dynarray<int, your_allocator> my_array_1(200);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200, 100);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);
+```
+
+Neat Version:
+
+```C++
+vla::dynarray<int, 1, your_allocator> my_array_1(200);
+vla::dynarray<int, 2, your_allocator> my_array_2(200, 100);
+vla::dynarray<int, 2, your_allocator> another_array(my_array_2);
 ```
 
 Note: all of the allocators must come from the same source (template, class) or dynarray will not be compiled. **Incorrect Example:**

@@ -432,17 +432,6 @@ vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array(200, 
 vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
 ```
 
-亦可以直接這樣來；
-
-```C++
-template<typename T>
-class your_allocator { /* ...... */ };
-
-vla::dynarray<int, your_allocator> my_array_1(200);
-vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200, 100);
-vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);
-```
-
 乾淨企理版就好得多
 
 ```C++
@@ -453,6 +442,27 @@ vla::dynarray<int, 2, your_allocator> my_array(200, my_alloc_2,
                                                100, my_alloc);
 
 vla::dynarray<int, 2, your_allocator> another_array(my_array, my_alloc_2, my_alloc);
+```
+
+亦可以直接這樣來；
+
+嵌套版：
+
+```C++
+template<typename T>
+class your_allocator { /* ...... */ };
+
+vla::dynarray<int, your_allocator> my_array_1(200);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> my_array_2(200, 100);
+vla::dynarray<vla::dynarray<int, your_allocator>, your_allocator> another_array(my_array_2);
+```
+
+乾淨企理版：
+
+```C++
+vla::dynarray<int, 1, your_allocator> my_array_1(200);
+vla::dynarray<int, 2, your_allocator> my_array_2(200, 100);
+vla::dynarray<int, 2, your_allocator> another_array(my_array_2);
 ```
 
 注意事項：所有分配器來源都必須相同，否則會無法編譯。以下是**錯誤例子**

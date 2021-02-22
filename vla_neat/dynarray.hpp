@@ -213,8 +213,8 @@ namespace vla
 		/*!
 		 * @brief Usage 1: Construct by multiple 'count'.\n
 		 * Create a multi-dimensional array.\n
-		 * Example A: dynarray<dynarray<int>> my_array(10, 10);         // creates a 2D array (10 × 10), initialise with default value (zero)\n
-		 * Example B: dynarray<dynarray<int>> my_array(10, 10, 20);     // creates a 2D array (10 × 10), initialise with value (20)
+		 * Example A: dynarray<int, 2> my_array(10, 10);         // creates a 2D array (10 × 10), initialise with default value (zero)\n
+		 * Example B: dynarray<int, 2> my_array(10, 10, 20);     // creates a 2D array (10 × 10), initialise with value (20)
 		 * 
 		 * Usage 2: Construct by a 'count' and initialise the elements with 'args'\n
 		 * Create a one-dimensional array, use 'args' to initialise the array's elements.\n
@@ -1321,8 +1321,8 @@ namespace vla
 		/*!
 		 * @brief Usage 1: Construct by multiple 'count'.\n
 		 * Create a multi-dimensional array.\n
-		 * Example A: dynarray<dynarray<int>> my_array(10, 10);         // creates a 2D array (10 × 10), initialise with default value (zero)\n
-		 * Example B: dynarray<dynarray<int>> my_array(10, 10, 20);     // creates a 2D array (10 × 10), initialise with value (20)
+		 * Example A: dynarray<int, 2> my_array(10, 10);         // creates a 2D array (10 × 10), initialise with default value (zero)\n
+		 * Example B: dynarray<int, 2> my_array(10, 10, 20);     // creates a 2D array (10 × 10), initialise with value (20)
 		 *
 		 * Usage 2: Construct by a 'count' and initialise the elements with 'args'\n
 		 * Create a one-dimensional array, use 'args' to initialise the array's elements.\n
