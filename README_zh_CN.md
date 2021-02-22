@@ -48,22 +48,19 @@ VLA 最大的特点是，可以在连续的内存空间内使用动态定义的�
 
 # 版本对比	
 
-| 版本描述                        | 原型版本         | 模板偏特化            | Lite 版本                | Mini 版本                | 干净整洁版 |
-| --------------------------- | :----------: | :--------------: | :--------------------: | :--------------------: |	:-:|
-| 文件<sup>1</sup>                           | dynarray.hpp | vla\_nest/dynarray.hpp | vla\_nest/dynarray\_lite.hpp | vla\_nest/dynarray\_mini.hpp | vla\_cleanlily/dynarray.hpp |
-| C++需求                       | C++17        | C++14            | C++17                  | C++17                  |	|
-| sizeof dynarray \(最外层<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |48 bytes|
-| sizeof dynarray \(中层每个节点<sup>2</sup>\)<sup>3</sup>  | 48 bytes     | 48 bytes         | 24 bytes               | 16 bytes               |48 bytes|
-| sizeof dynarray \(最内层每个节点<sup>2</sup>\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |32 bytes|
-| sizeof dynarray \(一维数组\)<sup>3</sup>| 48 bytes     | 32 bytes         | 24 bytes               | 16 bytes               |32 bytes|
-| 多维数组连续内存                    | 是            | 是                | 否                      | 否                      | 是 |
-| 可以使用自定义分配器                | 是            | 是                | 是                      | 否                      |	是 |
+| 版本描述    | 文件<sup>1</sup>               | C++需求 | sizeof dynarray<sup>2</sup> (最外层；中层每个节点<sup>2</sup>) | sizeof dynarray<sup>2</sup> (最内层每个节点<sup>3</sup>) | sizeof dynarray<sup>2</sup> (一维数组) | 多维数组连续内存 | 可以使用自定义分配器 |
+| ------- | ---------------------------- | ----- | ---------------------------------------------------- | ------------------------------------------------- | ---------------------------------- | -------- | ---------- |
+| 原型版本    | dynarray.hpp                 | C++17 | 48 bytes                                             | 48 bytes                                          | 48 bytes                           | 是        | 是          |
+| 模板偏特化   | vla\_nest/dynarray.hpp       | C++14 | 48 bytes                                             | 32 bytes                                          | 32 bytes                           | 是        | 是          |
+| Lite 版本 | vla\_nest/dynarray\_lite.hpp | C++17 | 24 bytes                                             | 24 bytes                                          | 24 bytes                           | 否        | 是          |
+| Mini 版本 | vla\_nest/dynarray\_mini.hpp | C++17 | 16 bytes                                             | 16 bytes                                          | 16 bytes                           | 否        | 否          |
+| 干净整洁版   | vla\_cleanlily/dynarray.hpp  |       | 48 bytes                                             | 32 bytes                                          | 32 bytes                           | 是        | 是          |
 
 <sup>1</sup> 请只使用其中一个 `.hpp` 文件。请勿全部都用。	
 
-<sup>2</sup> 多维数组
+<sup>2</sup> 对齐后
 
-<sup>3</sup> 对齐后
+<sup>3</sup> 多维数组
 
 # 使用方法
 
@@ -766,22 +763,34 @@ vla_array_2[0] = vla_array[0];
 
 ![多层dynarray](images/vla_dynarray_nested.png)
 
-## `vla/dynarray.hpp`	
+## `vla_nest/dynarray.hpp`	
 
 ![单层dynarray](images/vla_dynarray_single_size_optimised.png)	
 
 ![多层dynarray](images/vla_dynarray_nested_size_optimised.png)	
 
-## `vla/dynarray_lite.hpp`	
+## `vla_nest/dynarray_lite.hpp`	
 
 ![单层dynarray](images/vla_dynarray_single_lite.png)	
 
 ![多层dynarray](images/vla_dynarray_nested_lite.png)
 
+## `vla_neat/dynarray.hpp`
+
+![单层-dynarray](images/vla_dynarray_single_neat.png)
+
+![多层-dynarray](images/vla_dynarray_nested_neat.png)
+
 ## 最关键的一行代码
 
 ```C++
 friend class dynarray<dynarray<T, _Allocator>, _Allocator>;
+```
+
+及
+
+```C++
+friend class dynarray<T, N + 1, _Allocator>;
 ```
 
 极为简单，真的就一行，毫无神秘感。

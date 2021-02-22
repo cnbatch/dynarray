@@ -62,22 +62,19 @@ Requires C++17.
 
 # Version comparison
 
-| Version Description                                              | Proterotype version | Partial template specialisation | Lite Version                 | Mini Version                 | Neat Version           |
-| ---------------------------------------------------------------- | :-----------------: | :-----------------------------: | :--------------------------: | :--------------------------: |:----------------------:|
-| File<sup>1</sup>                                                 | dynarray.hpp        | vla\_nest/dynarray.hpp          | vla\_nest/dynarray\_lite.hpp | vla\_nest/dynarray\_mini.hpp | vla\_neat/dynarray.hpp |
-| C++ Version                                                      | C++17               | C++14                           | C++17                        | C++17                        | C++17                  |
-| sizeof dynarray \(Outermost<sup>2</sup>\)<sup>3</sup>            | 48 bytes            | 48 bytes                        | 24 bytes                     | 16 bytes                     | 48 bytes               |
-| sizeof dynarray \(middle layer per node<sup>2</sup>\)<sup>3</sup>| 48 bytes            | 48 bytes                        | 24 bytes                     | 16 bytes                     | 48 bytes               |
-| sizeof dynarray \(Innermost per node<sup>2</sup>\)<sup>3</sup>   | 48 bytes            | 32 bytes                        | 24 bytes                     | 16 bytes                     | 32 bytes               |
-| sizeof dynarray \(one-dimensional array\)<sup>3</sup>            | 48 bytes            | 32 bytes                        | 24 bytes                     | 16 bytes                     | 32 bytes               |
-| contiguous memory spaces for multi-dimensional array             | Yes                 | Yes                             | No                           | No                           | Yes                    |
-| custom allocator can be used                                     | Yes                 | Yes                             | Yes                          | No                           | Yes                    |
+| Version Description             | File<sup>1</sup>             | C++ Version | sizeof dynarray<sup>2</sup> (Outermost; middle layer per node<sup>3</sup>) | sizeof dynarray<sup>2</sup> (Innermost per node<sup>3</sup>) | sizeof dynarray<sup>2</sup> (one-dimensional array) | contiguous memory spaces for multi-dimensional array | custom allocator can be used |
+| ------------------------------- | ---------------------------- | ----------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------- | ---------------------------- |
+| Proterotype version             | dynarray.hpp                 | C++17       | 48 bytes                                                                   | 48 bytes                                                     | 48 bytes                                            | Yes                                                  | Yes                          |
+| Partial template specialisation | vla\_nest/dynarray.hpp       | C++14       | 48 bytes                                                                   | 32 bytes                                                     | 32 bytes                                            | Yes                                                  | Yes                          |
+| Lite Version                    | vla\_nest/dynarray\_lite.hpp | C++17       | 24 bytes                                                                   | 24 bytes                                                     | 24 bytes                                            | No                                                   | Yes                          |
+| Mini Version                    | vla\_nest/dynarray\_mini.hpp | C++17       | 16 bytes                                                                   | 16 bytes                                                     | 16 bytes                                            | No                                                   | No                           |
+| Neat Version                    | vla\_neat/dynarray.hpp       | C++17       | 48 bytes                                                                   | 32 bytes                                                     | 32 bytes                                            | Yes                                                  | Yes                          |
 
 <sup>1</sup> Use one of the `.hpp` file only. Please don't use them all at the same time.
 
-<sup>2</sup> Multi-dimensional array
+<sup>2</sup> Aligned
 
-<sup>3</sup> Aligned
+<sup>3</sup> Multi-dimensional array
 
 # How to use
 
@@ -782,22 +779,34 @@ Single-layer `dynarray` is a simplified version of multiple dynarray.
 
 ![multi-dynarray](images/vla_dynarray_nested.png)
 
-## `vla/dynarray.hpp`
+## `vla_nest/dynarray.hpp`
 
 ![single-dynarray](images/vla_dynarray_single_size_optimised.png)
 
 ![multi-dynarray](images/vla_dynarray_nested_size_optimised.png)
 
-## `vla/dynarray_lite.hpp`
+## `vla_nest/dynarray_lite.hpp`
 
 ![single-dynarray](images/vla_dynarray_single_lite.png)
 
 ![multi-dynarray](images/vla_dynarray_nested_lite.png)
 
+## `vla_neat/dynarray.hpp`
+
+![single-dynarray](images/vla_dynarray_single_neat.png)
+
+![multi-dynarray](images/vla_dynarray_nested_neat.png)
+
 ## The most important line of the code
 
 ```C++
 friend class dynarray<dynarray<T, _Allocator>, _Allocator>;
+```
+
+And
+
+```C++
+friend class dynarray<T, N + 1, _Allocator>;
 ```
 
 Extremely simple. No lying. No mystery.
