@@ -1297,6 +1297,18 @@ namespace vla
 		 * @param input_list Your initializer_list
 		 * @return A new dynarray
 		 */
+		dynarray& operator=(std::initializer_list<internal_value_type> input_list) noexcept
+		{
+			loop_copy(input_list);
+			return *this;
+		}
+
+		/*!
+		 * @brief Erase existing data and construct a new dynarray with initializer_list.
+		 *
+		 * @param input_list Your initializer_list
+		 * @return A new dynarray
+		 */
 		template<typename Ty>
 		dynarray& operator=(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
 		{
@@ -1661,6 +1673,8 @@ namespace vla
 		void copy_array(InputIterator other_begin, InputIterator other_end);
 
 		void loop_copy(const dynarray &right_dynarray);
+
+		void loop_copy(std::initializer_list<internal_value_type> input_list);
 
 		template<typename Ty>
 		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list);
@@ -2125,6 +2139,17 @@ namespace vla
 
 		for (size_type i = 0; i < current_dimension_array_size && i < right_dynarray.current_dimension_array_size; ++i)
 			*(current_dimension_array_data + i) = *(right_dynarray.current_dimension_array_data + i);
+	}
+
+	template<typename T, template<typename U> typename _Allocator>
+	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::loop_copy(std::initializer_list<internal_value_type> input_list)
+	{
+		size_type count = input_list.size();
+		if (size() == 0 || count == 0) return;
+		verify_size(count);
+		auto list_iter = input_list.begin();
+		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
+			*(this_level_array_head + i) = *list_iter;
 	}
 
 	template<typename T, template<typename U> typename _Allocator>

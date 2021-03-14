@@ -379,7 +379,7 @@ namespace vla
 		 * @param input_list Your initializer_list
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(std::initializer_list<T> input_list) noexcept
+		dynarray& operator=(std::initializer_list<internal_value_type> input_list) noexcept
 		{
 			loop_copy(input_list);
 			return *this;
@@ -750,7 +750,7 @@ namespace vla
 
 		void loop_copy(const dynarray &right_dynarray);
 
-		void loop_copy(std::initializer_list<T> input_list);
+		void loop_copy(std::initializer_list<internal_value_type> input_list);
 
 		template<typename Ty>
 		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list);
@@ -1368,7 +1368,7 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<T> input_list)
+	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<internal_value_type> input_list)
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;

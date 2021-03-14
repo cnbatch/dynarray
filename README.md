@@ -329,6 +329,11 @@ vla_array_b = vla_array_a;	// all elements of vla_array_b have value 10
 	vla::dynarray<vla::dynarray<int>> array33(3, 3);
 	array33 = { {1, 2, 3 }, {3, 2, 1}, {2, 4, 6} };
 	```
+	or \(Not apply to `dynarray_lite.hpp` and `dynarray_mini.hpp`\)
+	```C++
+	vla::dynarray<vla::dynarray<int>> array33(3, 3);
+	array33 = { 1, 2, 3, 3, 2, 1, 2, 4, 6 };	// the same as C-style array
+	```
 	- create a variable-length array
 	```C++
 	vla::dynarray<vla::dynarray<int>> vla_array = { {10, 100, 1000}, {1, 3, 5}, {0, 3} };
