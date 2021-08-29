@@ -290,12 +290,12 @@ namespace vla
 		 * 
 		 * If using operator= in nested dynarray, the original structure will not change. Replace original values only.
 		 * 
-		 * @param right_dynarray The right side of '='
+		 * @param other The right side of '='
 		 * @return A copied dynarray
 		 */
-		dynarray& operator=(const dynarray &right_dynarray) noexcept
+		dynarray& operator=(const dynarray &other) noexcept
 		{
-			loop_copy(right_dynarray);
+			loop_copy(other);
 			return *this;
 		}
 
@@ -304,12 +304,12 @@ namespace vla
 		 * 
 		 * If using operator= in nested dynarray, the original structure will not change. Replace original values only.
 		 * 
-		 * @param right_dynarray The right side of '='
+		 * @param other The right side of '='
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(dynarray &&right_dynarray) noexcept
+		dynarray& operator=(dynarray &&other) noexcept
 		{
-			loop_copy(right_dynarray);
+			move_values(other);
 			return *this;
 		}
 
@@ -648,14 +648,17 @@ namespace vla
 		template<typename InputIterator>
 		void copy_array(InputIterator other_begin, InputIterator other_end);
 
-		void loop_copy(const dynarray &right_dynarray);
+		void loop_copy(const dynarray &other) noexcept;
 
-		void loop_copy(std::initializer_list<T> input_list);
+		void loop_copy(std::initializer_list<T> input_list) noexcept;
 
 		template<typename Ty>
-		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list);
+		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept;
 
-		void move_array(dynarray &other);
+		void move_array(dynarray &other) noexcept;
+
+		void move_values(dynarray &other) noexcept;
+
 	};
 
 	template<typename T>
@@ -816,20 +819,20 @@ namespace vla
 	}
 
 	template<typename T>
-	inline void dynarray<T>::loop_copy(const dynarray &right_dynarray)
+	inline void dynarray<T>::loop_copy(const dynarray &other) noexcept
 	{
-		if (size() == 0 || right_dynarray.size() == 0) return;
+		if (size() == 0 || other.size() == 0) return;
 
-		for (size_type i = 0; i < current_dimension_array_size && i < right_dynarray.current_dimension_array_size; ++i)
-			current_dimension_array_data[i] = right_dynarray.current_dimension_array_data[i];
+		for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
+			current_dimension_array_data[i] = other.current_dimension_array_data[i];
 	}
 
 	template<typename T>
-	inline void dynarray<T>::loop_copy(std::initializer_list<T> input_list)
+	inline void dynarray<T>::loop_copy(std::initializer_list<T> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
-		verify_size(count);
+
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
 			current_dimension_array_data[i] = *list_iter;
@@ -837,22 +840,40 @@ namespace vla
 
 	template<typename T>
 	template<typename Ty>
-	inline void dynarray<T>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list)
+	inline void dynarray<T>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
-		verify_size(count);
+
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
 			current_dimension_array_data[i].loop_copy(*list_iter);
 	}
 
 	template<typename T>
-	inline void dynarray<T>::move_array(dynarray &other)
+	inline void dynarray<T>::move_array(dynarray &other) noexcept
 	{
 		current_dimension_array_size = other.current_dimension_array_size;
 		current_dimension_array_data = other.current_dimension_array_data;
 		other.initialise();
+	}
+
+	template<typename T>
+	inline void dynarray<T>::move_values(dynarray &other) noexcept
+	{
+		if (size() == 0 || other.size() == 0) return;
+
+		if constexpr (std::is_same_v<T, internal_value_type>)
+		{
+			difference_type length = std::min<difference_type>(current_dimension_array_size, other.current_dimension_array_size);
+			for (difference_type i = 0; i < length; ++i)
+				*(current_dimension_array_data + i) = std::move(*(other.current_dimension_array_data + i));
+		}
+		else
+		{
+			for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
+				current_dimension_array_data[i] = std::move(other.current_dimension_array_data[i]);
+		}
 	}
 
 	template<typename T>

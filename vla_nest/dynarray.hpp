@@ -326,12 +326,12 @@ namespace vla
 		 * 
 		 * If using operator= in nested dynarray, the original structure will not change. Replace original values only.
 		 * 
-		 * @param right_dynarray The right side of '='
+		 * @param other The right side of '='
 		 * @return A copied dynarray
 		 */
-		dynarray& operator=(const dynarray &right_dynarray) noexcept
+		dynarray& operator=(const dynarray &other) noexcept
 		{
-			loop_copy(right_dynarray);
+			loop_copy(other);
 			return *this;
 		}
 
@@ -340,12 +340,12 @@ namespace vla
 		 * 
 		 * If using operator= in nested dynarray, the original structure will not change. Replace original values only.
 		 * 
-		 * @param right_dynarray The right side of '='
+		 * @param other The right side of '='
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(dynarray &&right_dynarray) noexcept
+		dynarray& operator=(dynarray &&other) noexcept
 		{
-			loop_copy(right_dynarray);
+			move_values(other);
 			return *this;
 		}
 
@@ -704,11 +704,13 @@ namespace vla
 		template<typename InputIterator>
 		void copy_array(InputIterator other_begin, InputIterator other_end);
 
-		void loop_copy(const dynarray &right_dynarray);
+		void loop_copy(const dynarray &other) noexcept;
 
-		void loop_copy(std::initializer_list<T> input_list);
+		void loop_copy(std::initializer_list<T> input_list) noexcept;
 
-		void move_array(dynarray &other);
+		void move_array(dynarray &other) noexcept;
+
+		void move_values(dynarray &other) noexcept;
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -993,22 +995,22 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::loop_copy(const dynarray &right_dynarray)
+	inline void dynarray<T, _Allocator>::loop_copy(const dynarray &other) noexcept
 	{
-		if (size() == 0 || right_dynarray.size() == 0) return;
+		if (size() == 0 || other.size() == 0) return;
 
 		difference_type length = std::min<difference_type>(this_level_array_tail - this_level_array_head + 1,
-			right_dynarray.this_level_array_tail - right_dynarray.this_level_array_head + 1);
+			other.this_level_array_tail - other.this_level_array_head + 1);
 		for (difference_type i = 0; i < length; ++i)
-			*(this_level_array_head + i) = *(right_dynarray.this_level_array_head + i);
+			*(this_level_array_head + i) = *(other.this_level_array_head + i);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<T> input_list)
+	inline void dynarray<T, _Allocator>::loop_copy(std::initializer_list<T> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
-		verify_size(count);
+
 		auto list_iter = input_list.begin();
 		size_type length = static_cast<size_type>(this_level_array_tail - this_level_array_head + 1);
 		for (size_type i = 0; i < count && i < length; ++i, ++list_iter)
@@ -1016,13 +1018,24 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, _Allocator>::move_array(dynarray &other)
+	inline void dynarray<T, _Allocator>::move_array(dynarray &other) noexcept
 	{
 		contiguous_allocator = other.contiguous_allocator;
 		entire_array_data = other.entire_array_data;
 		this_level_array_head = other.this_level_array_head;
 		this_level_array_tail = other.this_level_array_tail;
 		other.reset();
+	}
+
+	template<typename T, template<typename U> typename _Allocator>
+	inline void dynarray<T, _Allocator>::move_values(dynarray &other) noexcept
+	{
+		if (size() == 0 || other.size() == 0) return;
+
+		difference_type length = std::min<difference_type>(this_level_array_tail - this_level_array_head + 1,
+			other.this_level_array_tail - other.this_level_array_head + 1);
+		for (difference_type i = 0; i < length; ++i)
+			*(this_level_array_head + i) = std::move(*(other.this_level_array_head + i));
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -1268,12 +1281,12 @@ namespace vla
 		 * 
 		 * If using operator= in nested dynarray, the original structure will not change. Replace original values only.
 		 * 
-		 * @param right_dynarray The right side of '='
+		 * @param other The right side of '='
 		 * @return A copied dynarray
 		 */
-		dynarray& operator=(const dynarray &right_dynarray) noexcept
+		dynarray& operator=(const dynarray &other) noexcept
 		{
-			loop_copy(right_dynarray);
+			loop_copy(other);
 			return *this;
 		}
 
@@ -1282,12 +1295,12 @@ namespace vla
 		 * 
 		 * If using operator= in nested dynarray, the original structure will not change. Replace original values only.
 		 * 
-		 * @param right_dynarray The right side of '='
+		 * @param other The right side of '='
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(dynarray &&right_dynarray) noexcept
+		dynarray& operator=(dynarray &&other) noexcept
 		{
-			loop_copy(right_dynarray);
+			move_values(other);
 			return *this;
 		}
 
@@ -1672,14 +1685,16 @@ namespace vla
 		template<typename InputIterator>
 		void copy_array(InputIterator other_begin, InputIterator other_end);
 
-		void loop_copy(const dynarray &right_dynarray);
+		void loop_copy(const dynarray &other) noexcept;
 
-		void loop_copy(std::initializer_list<internal_value_type> input_list);
+		void loop_copy(std::initializer_list<internal_value_type> input_list) noexcept;
 
 		template<typename Ty>
-		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list);
+		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept;
 
-		void move_array(dynarray &other);
+		void move_array(dynarray &other) noexcept;
+
+		void move_values(dynarray &other) noexcept;
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -2133,20 +2148,20 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::loop_copy(const dynarray &right_dynarray)
+	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::loop_copy(const dynarray &other) noexcept
 	{
-		if (size() == 0 || right_dynarray.size() == 0) return;
+		if (size() == 0 || other.size() == 0) return;
 
-		for (size_type i = 0; i < current_dimension_array_size && i < right_dynarray.current_dimension_array_size; ++i)
-			*(current_dimension_array_data + i) = *(right_dynarray.current_dimension_array_data + i);
+		for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
+			*(current_dimension_array_data + i) = *(other.current_dimension_array_data + i);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::loop_copy(std::initializer_list<internal_value_type> input_list)
+	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::loop_copy(std::initializer_list<internal_value_type> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
-		verify_size(count);
+
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
 			*(this_level_array_head + i) = *list_iter;
@@ -2154,18 +2169,18 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename Ty>
-	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list)
+	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
-		verify_size(count);
+
 		auto list_iter = input_list.begin();
 		for (size_type i = 0; i < count && i < current_dimension_array_size; ++i, ++list_iter)
 			(current_dimension_array_data + i)->loop_copy(*list_iter);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::move_array(dynarray &other)
+	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::move_array(dynarray &other) noexcept
 	{
 		array_allocator = other.array_allocator;
 		contiguous_allocator = other.contiguous_allocator;
@@ -2175,6 +2190,15 @@ namespace vla
 		this_level_array_head = other.this_level_array_head;
 		this_level_array_tail = other.this_level_array_tail;
 		other.reset();
+	}
+
+	template<typename T, template<typename U> typename _Allocator>
+	inline void dynarray<dynarray<T, _Allocator>, _Allocator>::move_values(dynarray &other) noexcept
+	{
+		if (size() == 0 || other.size() == 0) return;
+
+		for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
+			*(current_dimension_array_data + i) = std::move(*(other.current_dimension_array_data + i));
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
