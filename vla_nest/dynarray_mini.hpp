@@ -863,17 +863,8 @@ namespace vla
 	{
 		if (size() == 0 || other.size() == 0) return;
 
-		if constexpr (std::is_same_v<T, internal_value_type>)
-		{
-			difference_type length = std::min<difference_type>(current_dimension_array_size, other.current_dimension_array_size);
-			for (difference_type i = 0; i < length; ++i)
-				*(current_dimension_array_data + i) = std::move(*(other.current_dimension_array_data + i));
-		}
-		else
-		{
-			for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
-				current_dimension_array_data[i] = std::move(other.current_dimension_array_data[i]);
-		}
+		for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
+			current_dimension_array_data[i] = std::move(other.current_dimension_array_data[i]);
 	}
 
 	template<typename T>
