@@ -624,6 +624,7 @@ vla_array_2[0] = vla_array[0];
 |**[2][y]**| 5 | 5 | 5 |
 
 ## Other APIs
+### Member Functions
 1. `at(n)`
 	```C++
 	vla::dynarray<int> vla_array(5, 10);
@@ -771,7 +772,7 @@ vla_array_2[0] = vla_array[0];
 	vla_array.fill(256);	// all elements in all dimension have value 256
 	```
 
-## Iterators
+### Iterators
 * begin()
 * cbegin()
 * end()
@@ -781,6 +782,14 @@ vla_array_2[0] = vla_array[0];
 * rend()
 * crend()
 
+### Non-member functions
+ * operator==()
+ * operator!=()
+ * operator<()
+ * operator<=()
+ * operator>()
+ * operator>=()
+ * operator<=>() (to be supported)
 
 # Internal Design
 

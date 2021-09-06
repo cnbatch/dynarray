@@ -612,6 +612,7 @@ vla_array_2[0] = vla_array[0];
 |**[2][y]**| 5 | 5 | 5 |
 
 ## 其它接口
+### 成员函数
 1. `at(n)`
 	```C++
 	vla::dynarray<int> vla_array(5, 10);
@@ -755,7 +756,7 @@ vla_array_2[0] = vla_array[0];
 	vla_array.fill(256);	// all elements in all dimension have value 256
 	```
 
-## 迭代器
+### 迭代器
 * begin()
 * cbegin()
 * end()
@@ -765,6 +766,14 @@ vla_array_2[0] = vla_array[0];
 * rend()
 * crend()
 
+### 非成员函数
+ * operator==()
+ * operator!=()
+ * operator<()
+ * operator<=()
+ * operator>()
+ * operator>=()
+ * operator<=>() (待完成)
 
 # 内部设计
 

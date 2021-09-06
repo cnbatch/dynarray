@@ -55,6 +55,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _VLA_DYNARRAY_
 #define _VLA_DYNARRAY_
 
+#include <algorithm>
 #include <cstdlib>
 #include <initializer_list>
 #include <iterator>
@@ -177,7 +178,7 @@ namespace vla
 		 * @brief Default Constructor.
 		 * Create a zero-size array.
 		 */
-		dynarray()
+		dynarray() noexcept
 		{
 			initialise();
 		}
@@ -264,7 +265,7 @@ namespace vla
 		 *
 		 * @param other Another array
 		 */
-		dynarray(dynarray &&other)
+		dynarray(dynarray &&other) noexcept
 		{
 			if constexpr (N > 0)
 				move_array(other);
@@ -737,6 +738,38 @@ namespace vla
 		void move_array(dynarray &other) noexcept;
 
 		void move_values(dynarray &other) noexcept;
+
+		/**** Non-member functions  ***/
+
+		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator!=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs == rhs);
+		}
+
+		friend bool operator<(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator>(const dynarray &lhs, const dynarray &rhs)
+		{
+			return rhs < lhs;
+		}
+
+		friend bool operator<=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(rhs < lhs);
+		}
+
+		friend bool operator>=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs < rhs);
+		}
 	};
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
@@ -1033,8 +1066,10 @@ namespace vla
 		current_dimension_array_size = other.current_dimension_array_size;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
+		internal_pointer_type other_array_data = other.entire_array_data == nullptr ?
+			reinterpret_cast<internal_pointer_type>(other.this_level_array_head) : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
-			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other.entire_array_data + i));
+			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
 		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
 		internal_pointer_type starting_address = entire_array_data;
@@ -1059,8 +1094,10 @@ namespace vla
 		contiguous_allocator = expand_allocator(std::forward<Args>(args)...);
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
+		internal_pointer_type other_array_data = other.entire_array_data == nullptr ?
+			reinterpret_cast<internal_pointer_type>(other.this_level_array_head) : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
-			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other.entire_array_data + i));
+			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
 		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
 		internal_pointer_type starting_address = entire_array_data;
@@ -1078,7 +1115,6 @@ namespace vla
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	inline void dynarray<T, N, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other)
 	{
-		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		current_dimension_array_size = other.current_dimension_array_size;
 		entire_array_data = nullptr;
 
@@ -1298,7 +1334,7 @@ namespace vla
 		 * @brief Default Constructor.
 		 * Create a zero-size array.
 		 */
-		dynarray()
+		dynarray() noexcept
 		{
 			initialise();
 		}
@@ -1380,7 +1416,7 @@ namespace vla
 		 *
 		 * @param other Another array
 		 */
-		dynarray(dynarray &&other)
+		dynarray(dynarray &&other) noexcept
 		{
 			move_array(other);
 		}
@@ -1815,6 +1851,38 @@ namespace vla
 		void move_array(dynarray &other) noexcept;
 
 		void move_values(dynarray &other) noexcept;
+
+		/**** Non-member functions  ***/
+
+		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator!=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs == rhs);
+		}
+
+		friend bool operator<(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator>(const dynarray &lhs, const dynarray &rhs)
+		{
+			return rhs < lhs;
+		}
+
+		friend bool operator<=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(rhs < lhs);
+		}
+
+		friend bool operator>=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs < rhs);
+		}
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -2023,8 +2091,10 @@ namespace vla
 		if (entire_array_size == 0) return;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
+		pointer other_array_data = other.entire_array_data == nullptr ?
+			reinterpret_cast<pointer>(other.this_level_array_head) : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
-			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other.entire_array_data + i));
+			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
 		this_level_array_head = entire_array_data;
 		this_level_array_tail = this_level_array_head + entire_array_size - 1;
@@ -2038,8 +2108,10 @@ namespace vla
 		if (entire_array_size == 0) return;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
+		pointer other_array_data = other.entire_array_data == nullptr ?
+			reinterpret_cast<pointer>(other.this_level_array_head) : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
-			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other.entire_array_data + i));
+			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
 		this_level_array_head = entire_array_data;
 		this_level_array_tail = this_level_array_head + entire_array_size - 1;

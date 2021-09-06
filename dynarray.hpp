@@ -55,6 +55,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _VLA_DYNARRAY_
 #define _VLA_DYNARRAY_
 
+#include <algorithm>
 #include <cstdlib>
 #include <initializer_list>
 #include <iterator>
@@ -194,7 +195,7 @@ namespace vla
 		 * @brief Default Constructor.
 		 * Create a zero-size array.
 		 */
-		dynarray()
+		dynarray() noexcept
 		{
 			initialise();
 		}
@@ -276,7 +277,7 @@ namespace vla
 		 *
 		 * @param other Another array
 		 */
-		dynarray(dynarray &&other)
+		dynarray(dynarray &&other) noexcept
 		{
 			move_array(other);
 		}
@@ -510,7 +511,13 @@ namespace vla
 		 * @return Pointer to the underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		pointer get() noexcept { return current_dimension_array_data; }
+		pointer get() noexcept
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				return this_level_array_head;
+			else
+				return current_dimension_array_data;
+		}
 
 		/*!
 		 * @brief Returns const pointer to the underlying array serving as element storage.
@@ -520,7 +527,13 @@ namespace vla
 		 * @return Const pointer to the underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		const pointer get() const noexcept { return current_dimension_array_data; }
+		const pointer get() const noexcept
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				return this_level_array_head;
+			else
+				return current_dimension_array_data;
+		}
 
 		/*!
 		 * @brief Checks if the container has no elements.
@@ -571,7 +584,14 @@ namespace vla
 		 * 
 		 * @return Iterator to the first element.
 		*/
-		iterator begin() noexcept { return iterator(current_dimension_array_data); }
+		iterator begin() noexcept
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				return iterator(this_level_array_head);
+			else
+				return iterator(current_dimension_array_data);
+		}
+
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -580,7 +600,13 @@ namespace vla
 		 *
 		 * @return Iterator to the first element.
 		*/
-		const_iterator begin() const noexcept { return const_iterator(current_dimension_array_data); }
+		const_iterator begin() const noexcept
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				return const_iterator(this_level_array_head);
+			else
+				return const_iterator(current_dimension_array_data);
+		}
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -598,7 +624,14 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		iterator end() noexcept { return iterator(current_dimension_array_data + current_dimension_array_size); }
+		iterator end() noexcept
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				return iterator(this_level_array_head + current_dimension_array_size);
+			else
+				return iterator(current_dimension_array_data + current_dimension_array_size);
+		}
+
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -607,7 +640,14 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		const_iterator end() const noexcept { return const_iterator(current_dimension_array_data + current_dimension_array_size); }
+		const_iterator end() const noexcept
+		{
+			if constexpr (std::is_same_v<T, internal_value_type>)
+				return const_iterator(this_level_array_head + current_dimension_array_size);
+			else
+				return const_iterator(current_dimension_array_data + current_dimension_array_size);
+		}
+
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -680,7 +720,7 @@ namespace vla
 		internal_pointer_type entire_array_data;	// always nullptr in nested-dynarray
 
 		size_type current_dimension_array_size;
-		pointer current_dimension_array_data;	// as node managers if not innermost layer
+		pointer current_dimension_array_data;	// as node managers if not innermost layer; set as nullptr in innermost layer
 
 		internal_pointer_type this_level_array_head;
 		internal_pointer_type this_level_array_tail;
@@ -758,6 +798,39 @@ namespace vla
 		void move_array(dynarray &other) noexcept;
 
 		void move_values(dynarray &other) noexcept;
+
+
+		/**** Non-member functions  ***/
+
+		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator!=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs == rhs);
+		}
+
+		friend bool operator<(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator>(const dynarray &lhs, const dynarray &rhs)
+		{
+			return rhs < lhs;
+		}
+
+		friend bool operator<=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(rhs < lhs);
+		}
+
+		friend bool operator>=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs < rhs);
+		}
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -1182,8 +1255,10 @@ namespace vla
 		current_dimension_array_size = other.current_dimension_array_size;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
+		internal_pointer_type other_array_data = other.entire_array_data == nullptr ?
+			reinterpret_cast<internal_pointer_type>(other.this_level_array_head) : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
-			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other.entire_array_data + i));
+			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
 		if constexpr (std::is_same_v<T, internal_value_type>)
 		{
@@ -1216,8 +1291,10 @@ namespace vla
 			contiguous_allocator = expand_allocator(std::forward<Args>(args)...);
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
+		internal_pointer_type other_array_data = other.entire_array_data == nullptr ?
+			reinterpret_cast<internal_pointer_type>(other.this_level_array_head) : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
-			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other.entire_array_data + i));
+			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
 		if constexpr (std::is_same_v<T, internal_value_type>)
 		{
@@ -1242,7 +1319,6 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other)
 	{
-		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		current_dimension_array_size = other.current_dimension_array_size;
 		entire_array_data = nullptr;
 

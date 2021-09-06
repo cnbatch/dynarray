@@ -55,6 +55,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _VLA_DYNARRAY_LITE_
 #define _VLA_DYNARRAY_LITE_
 
+#include <algorithm>
 #include <cstdlib>
 #include <initializer_list>
 #include <iterator>
@@ -192,7 +193,7 @@ namespace vla
 		 * @brief Default Constructor.
 		 * Create a zero-size array.
 		 */
-		dynarray() : array_allocator(allocator_type())
+		dynarray() noexcept : array_allocator(allocator_type())
 		{
 			initialise();
 		}
@@ -274,7 +275,7 @@ namespace vla
 		 *
 		 * @param other Another array
 		 */
-		dynarray(dynarray &&other) : array_allocator(allocator_type())
+		dynarray(dynarray &&other) noexcept : array_allocator(allocator_type())
 		{
 			move_array(other);
 		}
@@ -710,6 +711,38 @@ namespace vla
 		void move_array(dynarray &other)noexcept;
 
 		void move_values(dynarray &other) noexcept;
+
+		/**** Non-member functions  ***/
+
+		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator!=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs == rhs);
+		}
+
+		friend bool operator<(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator>(const dynarray &lhs, const dynarray &rhs)
+		{
+			return rhs < lhs;
+		}
+
+		friend bool operator<=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(rhs < lhs);
+		}
+
+		friend bool operator>=(const dynarray &lhs, const dynarray &rhs)
+		{
+			return !(lhs < rhs);
+		}
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
