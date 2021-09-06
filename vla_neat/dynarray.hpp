@@ -1066,8 +1066,7 @@ namespace vla
 		current_dimension_array_size = other.current_dimension_array_size;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
-		internal_pointer_type other_array_data = other.entire_array_data == nullptr ?
-			reinterpret_cast<internal_pointer_type>(other.this_level_array_head) : other.entire_array_data;
+		internal_pointer_type other_array_data = other.entire_array_data == nullptr ? other.this_level_array_head : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
 			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
@@ -1094,8 +1093,7 @@ namespace vla
 		contiguous_allocator = expand_allocator(std::forward<Args>(args)...);
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
-		internal_pointer_type other_array_data = other.entire_array_data == nullptr ?
-			reinterpret_cast<internal_pointer_type>(other.this_level_array_head) : other.entire_array_data;
+		internal_pointer_type other_array_data = other.entire_array_data == nullptr ? other.this_level_array_head : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
 			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
@@ -1221,14 +1219,41 @@ namespace vla
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	inline void dynarray<T, N, _Allocator>::move_array(dynarray &other) noexcept
 	{
-		array_allocator = other.array_allocator;
-		contiguous_allocator = other.contiguous_allocator;
-		entire_array_data = other.entire_array_data;
-		current_dimension_array_size = other.current_dimension_array_size;
-		current_dimension_array_data = other.current_dimension_array_data;
-		this_level_array_head = other.this_level_array_head;
-		this_level_array_tail = other.this_level_array_tail;
-		other.reset();
+		if (other.entire_array_data == nullptr)
+		{
+			initialise();
+
+			size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
+			if (entire_array_size == 0 || other.current_dimension_array_size == 0) return;
+			current_dimension_array_size = other.current_dimension_array_size;
+
+			entire_array_data = contiguous_allocator.allocate(entire_array_size);
+			internal_pointer_type other_array_data = other.this_level_array_head;
+			for (size_type i = 0; i < entire_array_size; ++i)
+				std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, std::move(*(other_array_data + i)));
+
+			current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+			internal_pointer_type starting_address = entire_array_data;
+			for (size_type i = 0; i < current_dimension_array_size; ++i)
+			{
+				std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i);
+				(current_dimension_array_data + i)->copy_array(starting_address, *(other.current_dimension_array_data + i));
+				starting_address += other[i].get_block_size();
+			}
+			this_level_array_head = entire_array_data;
+			this_level_array_tail = this_level_array_head + entire_array_size - 1;
+		}
+		else
+		{
+			array_allocator = other.array_allocator;
+			contiguous_allocator = other.contiguous_allocator;
+			entire_array_data = other.entire_array_data;
+			current_dimension_array_size = other.current_dimension_array_size;
+			current_dimension_array_data = other.current_dimension_array_data;
+			this_level_array_head = other.this_level_array_head;
+			this_level_array_tail = other.this_level_array_tail;
+			other.reset();
+		}
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
@@ -2091,8 +2116,7 @@ namespace vla
 		if (entire_array_size == 0) return;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
-		pointer other_array_data = other.entire_array_data == nullptr ?
-			reinterpret_cast<pointer>(other.this_level_array_head) : other.entire_array_data;
+		pointer other_array_data = other.entire_array_data == nullptr ? other.this_level_array_head : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
 			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
@@ -2108,8 +2132,7 @@ namespace vla
 		if (entire_array_size == 0) return;
 
 		entire_array_data = contiguous_allocator.allocate(entire_array_size);
-		pointer other_array_data = other.entire_array_data == nullptr ?
-			reinterpret_cast<pointer>(other.this_level_array_head) : other.entire_array_data;
+		pointer other_array_data = other.entire_array_data == nullptr ? other.this_level_array_head : other.entire_array_data;
 		for (size_type i = 0; i < entire_array_size; ++i)
 			std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, *(other_array_data + i));
 
@@ -2188,11 +2211,29 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, 1, _Allocator>::move_array(dynarray &other) noexcept
 	{
-		contiguous_allocator = other.contiguous_allocator;
-		entire_array_data = other.entire_array_data;
-		this_level_array_head = other.this_level_array_head;
-		this_level_array_tail = other.this_level_array_tail;
-		other.reset();
+		if (other.entire_array_data == nullptr)
+		{
+			initialise();
+
+			size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
+			if (entire_array_size == 0) return;
+
+			entire_array_data = contiguous_allocator.allocate(entire_array_size);
+			pointer other_array_data = other.this_level_array_head;
+			for (size_type i = 0; i < entire_array_size; ++i)
+				std::allocator_traits<contiguous_allocator_type>::construct(contiguous_allocator, entire_array_data + i, std::move(*(other_array_data + i)));
+
+			this_level_array_head = entire_array_data;
+			this_level_array_tail = this_level_array_head + entire_array_size - 1;
+		}
+		else
+		{
+			contiguous_allocator = other.contiguous_allocator;
+			entire_array_data = other.entire_array_data;
+			this_level_array_head = other.this_level_array_head;
+			this_level_array_tail = other.this_level_array_tail;
+			other.reset();
+		}
 	}
 
 	template<typename T, template<typename U> typename _Allocator>

@@ -965,10 +965,17 @@ namespace vla
 	template<typename T, template<typename U> typename _Allocator>
 	inline void dynarray<T, _Allocator>::move_array(dynarray &other) noexcept
 	{
-		array_allocator = other.array_allocator;
+		if (other.current_dimension_array_size == 0) return;
 		current_dimension_array_size = other.current_dimension_array_size;
-		current_dimension_array_data = other.current_dimension_array_data;
-		other.initialise();
+		array_allocator = other.array_allocator;
+		current_dimension_array_data = array_allocator.allocate(current_dimension_array_size);
+		for (size_type i = 0; i < current_dimension_array_size; ++i)
+			std::allocator_traits<allocator_type>::construct(array_allocator, current_dimension_array_data + i, std::move(*(other.current_dimension_array_data + i)));
+
+		//array_allocator = other.array_allocator;
+		//current_dimension_array_size = other.current_dimension_array_size;
+		//current_dimension_array_data = other.current_dimension_array_data;
+		//other.initialise();
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
