@@ -796,10 +796,12 @@ vla_array_2[0] = vla_array[0];
  * void swap(dynarray &lhs, dynarray &rhs)
     - If both of `lhs` and `rhs` are array of outermost layer, this function will swap them completely, just like `std::swap(std::vector. std::vector)`.
 	- Otherwise, this function will call `lhs.swap(rhs)` directly as long as one of the array is not outermost layer.
+	- Not available for version of Lite (dynarray_lite.hpp) and Mini (dynarray_mini.hpp).
 
  * dynarray exchange(dynarray &old_array, dynarray &new_array)
     - If `old_array` itself is array of outermost layer, this function will replaces `old_array` with `new_array` and  return the original values of `old_array`.
     - If `old_array` is an array of inner-layer, this function will replaces the contents of `old_array` with the contents of `new_array`, but the size of `old_array` will keeps unchanged; and then return a new `dynarray`, it's value is the original contents of `old_array`.
+	- Not available for version of Lite (dynarray_lite.hpp) and Mini (dynarray_mini.hpp).
 
 
 # Internal Design
