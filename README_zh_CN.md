@@ -739,6 +739,8 @@ vla_array_2[0] = vla_array[0];
 	|**[1][y]**| 1 | 1 | 1 |
 	|**[2][y]**| 1 | 1 | 1 |
 
+	如果需要交换两个 `dynarray`，请使用 `vla::swap()`。
+
 11. `fill()`
 
 	```C++
@@ -767,13 +769,22 @@ vla_array_2[0] = vla_array[0];
 * crend()
 
 ### 非成员函数
- * operator==()
- * operator!=()
- * operator<()
- * operator<=()
- * operator>()
- * operator>=()
- * operator<=>() (待完成)
+ * bool operator==(const dynarray &lhs, const dynarray &rhs)
+ * bool operator!=(const dynarray &lhs, const dynarray &rhs)
+ * bool operator<(const dynarray &lhs, const dynarray &rhs)
+ * bool operator<=(const dynarray &lhs, const dynarray &rhs)
+ * bool operator>(const dynarray &lhs, const dynarray &rhs)
+ * bool operator>=(const dynarray &lhs, const dynarray &rhs)
+ * bool operator<=>(const dynarray &lhs, const dynarray &rhs) (待完成)
+
+ * void swap(dynarray &lhs, dynarray &rhs)
+    - 如果 `lhs` 以及 `rhs` 都是最外层 array，那么该函数会做彻底的交换，就像 `std::swap(std::vector. std::vector)` 那样。
+	- 否则，只要其中一个不是最外层 array，那么该函数就会直接 `lhs.swap(rhs)`。
+
+ * dynarray exchange(dynarray &old_array, dynarray &new_array)
+    - 如果 `old_array` 本身就是最外层 array，那么该函数会用 `new_array` 替换 `old_array`，并返回 `old_array` 的最初时的值。
+    - 如果 `old_array` 是内层 array，那么该函数只会用 `new_array` 的内值替换 `old_array` 相应位置的内值，但 `old_array` 的大小保持不变；然后返回一个新的 `dynarray`，内容为 `old_array` 的原先的值。
+
 
 # 内部设计
 

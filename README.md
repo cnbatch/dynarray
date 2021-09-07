@@ -753,6 +753,8 @@ vla_array_2[0] = vla_array[0];
 	|**[1][y]**| 1 | 1 | 1 |
 	|**[2][y]**| 1 | 1 | 1 |
 
+	If you want to swap between two `dynarray`, you can use `vla::swap()`.
+
 ***
 
 11. `fill()`
@@ -783,13 +785,22 @@ vla_array_2[0] = vla_array[0];
 * crend()
 
 ### Non-member functions
- * operator==()
- * operator!=()
- * operator<()
- * operator<=()
- * operator>()
- * operator>=()
- * operator<=>() (to be supported)
+ * bool operator==(const dynarray &lhs, const dynarray &rhs)
+ * bool operator!=(const dynarray &lhs, const dynarray &rhs)
+ * bool operator<(const dynarray &lhs, const dynarray &rhs)
+ * bool operator<=(const dynarray &lhs, const dynarray &rhs)
+ * bool operator>(const dynarray &lhs, const dynarray &rhs)
+ * bool operator>=(const dynarray &lhs, const dynarray &rhs)
+ * bool operator<=>(const dynarray &lhs, const dynarray &rhs) (to be supported)
+ 
+ * void swap(dynarray &lhs, dynarray &rhs)
+    - If both of `lhs` and `rhs` are array of outermost layer, this function will swap them completely, just like `std::swap(std::vector. std::vector)`.
+	- Otherwise, this function will call `lhs.swap(rhs)` directly as long as one of the array is not outermost layer.
+
+ * dynarray exchange(dynarray &old_array, dynarray &new_array)
+    - If `old_array` itself is array of outermost layer, this function will replaces `old_array` with `new_array` and  return the original values of `old_array`.
+    - If `old_array` is an array of inner-layer, this function will replaces the contents of `old_array` with the contents of `new_array`, but the size of `old_array` will keeps unchanged; and then return a new `dynarray`, it's value is the original contents of `old_array`.
+
 
 # Internal Design
 

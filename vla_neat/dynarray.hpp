@@ -739,7 +739,16 @@ namespace vla
 
 		void move_values(dynarray &other) noexcept;
 
+		void swap_all(dynarray &other) noexcept;
+
+		void swap_outside(dynarray &other) noexcept;
+
+
 		/**** Non-member functions  ***/
+
+		friend void swap(dynarray &lhs, dynarray &rhs) noexcept;
+
+		friend dynarray exchange(dynarray &old_array, dynarray &&new_array) noexcept;
 
 		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
 		{
@@ -1266,6 +1275,28 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
+	inline void dynarray<T, N, _Allocator>::swap_all(dynarray &other) noexcept
+	{
+		std::swap(entire_array_data, other.entire_array_data);
+		std::swap(current_dimension_array_size, other.current_dimension_array_size);
+		std::swap(current_dimension_array_data, other.current_dimension_array_data);
+		std::swap(this_level_array_head, other.this_level_array_head);
+		std::swap(this_level_array_tail, other.this_level_array_tail);
+		std::swap(array_allocator, other.array_allocator);
+		std::swap(contiguous_allocator, other.contiguous_allocator);
+	}
+
+	template<typename T, std::size_t N, template<typename U> typename _Allocator>
+	inline void dynarray<T, N, _Allocator>::swap_outside(dynarray &other) noexcept
+	{
+		if ((entire_array_data == nullptr && current_dimension_array_size > 0) ||
+			(other.entire_array_data == nullptr && other.current_dimension_array_size > 0))
+			swap(other);
+		else
+			swap_all(other);
+	}
+
+	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	inline typename dynarray<T, N, _Allocator>::reference
 	dynarray<T, N, _Allocator>::at(size_type pos)
 	{
@@ -1327,6 +1358,54 @@ namespace vla
 			*current_address = value;
 	}
 
+	/*!
+	 * @brief Exchanges the contents of the container with those of other.
+	 *
+	 * If both of the containers are outter-most layer, they will be swapped completely, including sizes.
+	 *
+	 * Otherwise swap the contents only.
+	 *
+	 * @param lhs A dynarray
+	 * @param rhs Another dynarray
+	 * @return
+	*/
+	template<typename T, std::size_t N, template<typename U> typename _Allocator>
+	void swap(dynarray<T, N, _Allocator> &lhs, dynarray<T, N, _Allocator> &rhs) noexcept
+	{
+		lhs.swap_outside(rhs);
+	}
+
+	/*!
+	 * @brief Replaces old_array with new_array and returns the old value of old_array.
+	 *
+	 * If old_array is an inner layer, exchange() will replaces the contents of the container only, the size of old_array will keeps unchanged.
+	 *
+	 * @param old_array Old array to be replaced
+	 * @param new_array New array replace with
+	 * @return The value of old_array
+	*/
+	template<typename T, std::size_t N, template<typename U> typename _Allocator>
+	dynarray<T, N, _Allocator> exchange(dynarray<T, N, _Allocator> &old_array, dynarray<T, N, _Allocator> &&new_array) noexcept
+	{
+		dynarray current_array = std::move(old_array);
+		if (old_array.entire_array_data == nullptr && old_array.current_dimension_array_size > 0)
+		{
+			old_array.swap(new_array);
+		}
+		else
+		{
+			if (new_array.entire_array_data == nullptr && new_array.current_dimension_array_size > 0)
+			{
+				dynarray temp_array = std::move(new_array);
+				old_array.swap_all(temp_array);
+			}
+			else
+			{
+				old_array.swap_all(new_array);
+			}
+		}
+		return current_array;
+	}
 
 
 	template<typename T, template<typename U> typename _Allocator>
@@ -1877,7 +1956,16 @@ namespace vla
 
 		void move_values(dynarray &other) noexcept;
 
+		void swap_all(dynarray &other) noexcept;
+
+		void swap_outside(dynarray &other) noexcept;
+
+
 		/**** Non-member functions  ***/
+
+		friend void swap(dynarray &lhs, dynarray &rhs) noexcept;
+
+		friend dynarray exchange(dynarray &old_array, dynarray &&new_array) noexcept;
 
 		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
 		{
@@ -2248,6 +2336,24 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
+	inline void dynarray<T, 1, _Allocator>::swap_all(dynarray &other) noexcept
+	{
+		std::swap(entire_array_data, other.entire_array_data);
+		std::swap(this_level_array_head, other.this_level_array_head);
+		std::swap(this_level_array_tail, other.this_level_array_tail);
+		std::swap(contiguous_allocator, other.contiguous_allocator);
+	}
+
+	template<typename T, template<typename U> typename _Allocator>
+	inline void dynarray<T, 1, _Allocator>::swap_outside(dynarray &other) noexcept
+	{
+		if (entire_array_data == nullptr || other.entire_array_data == nullptr)
+			swap(other);
+		else
+			swap_all(other);
+	}
+
+	template<typename T, template<typename U> typename _Allocator>
 	inline typename dynarray<T, 1, _Allocator>::reference
 		dynarray<T, 1, _Allocator>::at(size_type pos)
 	{
@@ -2310,6 +2416,56 @@ namespace vla
 			++current_address)
 			*current_address = value;
 	}
+
+	/*!
+	 * @brief Exchanges the contents of the container with those of other.
+	 *
+	 * If both of the containers are outter-most layer, they will be swapped completely, including sizes.
+	 *
+	 * Otherwise swap the contents only.
+	 *
+	 * @param lhs A dynarray
+	 * @param rhs Another dynarray
+	 * @return
+	*/
+	template<typename T, template<typename U> typename _Allocator>
+	void swap(dynarray<T, 1, _Allocator> &lhs, dynarray<T, 1, _Allocator> &rhs) noexcept
+	{
+		lhs.swap_outside(rhs);
+	}
+
+	/*!
+	 * @brief Replaces old_array with new_array and returns the old value of old_array.
+	 *
+	 * If old_array is an inner layer, exchange() will replaces the contents of the container only, the size of old_array will keeps unchanged.
+	 *
+	 * @param old_array Old array to be replaced
+	 * @param new_array New array replace with
+	 * @return The value of old_array
+	*/
+	template<typename T, template<typename U> typename _Allocator>
+	dynarray<T, 1, _Allocator> exchange(dynarray<T, 1, _Allocator> &old_array, dynarray<T, 1, _Allocator> &&new_array) noexcept
+	{
+		dynarray current_array = std::move(old_array);
+		if (old_array.entire_array_data == nullptr)
+		{
+			old_array.swap(new_array);
+		}
+		else
+		{
+			if (new_array.entire_array_data == nullptr)
+			{
+				dynarray temp_array = std::move(new_array);
+				old_array.swap_all(temp_array);
+			}
+			else
+			{
+				old_array.swap_all(new_array);
+			}
+		}
+		return current_array;
+	}
+
 }	// namespace vla
 
 
