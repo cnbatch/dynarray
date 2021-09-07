@@ -759,32 +759,32 @@ vla_array_2[0] = vla_array[0];
 	```
 
 ### 迭代器
-* begin()
-* cbegin()
-* end()
-* cend()
-* rbegin()
-* crbegin()
-* rend()
-* crend()
+* `begin()`
+* `cbegin()`
+* `end()`
+* `cend()`
+* `rbegin()`
+* `crbegin()`
+* `rend()`
+* `crend()`
 
 ### 非成員函數
- * bool operator==(const dynarray &lhs, const dynarray &rhs)
- * bool operator!=(const dynarray &lhs, const dynarray &rhs)
- * bool operator<(const dynarray &lhs, const dynarray &rhs)
- * bool operator<=(const dynarray &lhs, const dynarray &rhs)
- * bool operator>(const dynarray &lhs, const dynarray &rhs)
- * bool operator>=(const dynarray &lhs, const dynarray &rhs)
- * bool operator<=>(const dynarray &lhs, const dynarray &rhs) (待完成)
+ * `bool operator==(const dynarray &lhs, const dynarray &rhs)`
+ * `bool operator!=(const dynarray &lhs, const dynarray &rhs)`
+ * `bool operator<(const dynarray &lhs, const dynarray &rhs)`
+ * `bool operator<=(const dynarray &lhs, const dynarray &rhs)`
+ * `bool operator>(const dynarray &lhs, const dynarray &rhs)`
+ * `bool operator>=(const dynarray &lhs, const dynarray &rhs)`
+ * `bool operator<=>(const dynarray &lhs, const dynarray &rhs)` (待完成)
 
- * void swap(dynarray &lhs, dynarray &rhs)
+ * `void swap(dynarray &lhs, dynarray &rhs)`
     - 如果 `lhs` 以及 `rhs` 都是最外層 array，那麼該函數會做徹底的交換，就像 `std::swap(std::vector. std::vector)` 那樣。
-    - 否則，只要其中一個不是最外層 array，那麼該函數的表現就會直接 `lhs.swap(rhs)`。
+    - 否則，祇要其中一個不是最外層 array，那麼該函數的表現就會直接 `lhs.swap(rhs)`。
 	- 不適用於 Lite (dynarray_lite.hpp) 以及 Mini (dynarray_mini.hpp) 版本。
 
- * dynarray exchange(dynarray &old_array, dynarray &new_array)
+ * `dynarray exchange(dynarray &old_array, dynarray &new_array)`
     - 如果 `old_array` 本身就是最外層 array，那麼該函數會用 `new_array` 替換 `old_array`，並返回 `old_array` 的最初時的值。
-    - 如果 `old_array` 是內層 array，那麼該函數只會用 `new_array` 的內值替換 `old_array` 相應位置的內值，但 `old_array` 的大小保持不變；然後返回一個新的 `dynarray`，內容爲 `old_array` 的原先的值。
+    - 如果 `old_array` 是內層 array，那麼該函數祇會用 `new_array` 的內值替換 `old_array` 相應位置的內值，但 `old_array` 的大小保持不變；然後返回一個新的 `dynarray`，內容爲 `old_array` 的原先的值。
 	- 不適用於 Lite (dynarray_lite.hpp) 以及 Mini (dynarray_mini.hpp) 版本。
 
 
