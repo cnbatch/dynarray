@@ -65,6 +65,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <type_traits>
 #include <utility>
 
+#if __cplusplus >= 202002L || (defined(_MSVC_LANG) && (_MSVC_LANG >= 202002L))
+#define DYNARRAY_USING_CPP20
+#endif
+
+#ifdef DYNARRAY_USING_CPP20
+#define CPP20_DYNARRAY_CONSTEXPR constexpr
+#define CPP20_DYNARRAY_NODISCARD [[nodiscard]]
+#else
+#define CPP20_DYNARRAY_CONSTEXPR
+#define CPP20_DYNARRAY_NODISCARD
+#endif
+
 namespace vla
 {
 	template<typename T, std::size_t N = 1, template<typename U> typename _Allocator = std::allocator>
@@ -73,10 +85,10 @@ namespace vla
 	namespace internal_impl
 	{
 		template<typename Skip>
-		std::size_t expand_parameters(std::size_t count, const Skip &skip) { return count; }
+		CPP20_DYNARRAY_CONSTEXPR std::size_t expand_parameters(std::size_t count, const Skip &skip) { return count; }
 
 		template<typename Skip, typename ... Args>
-		std::size_t expand_parameters(std::size_t count, const Skip &skip, Args&& ... args) { return count * expand_parameters(std::forward<Args>(args)...); }
+		CPP20_DYNARRAY_CONSTEXPR std::size_t expand_parameters(std::size_t count, const Skip &skip, Args&& ... args) { return count * expand_parameters(std::forward<Args>(args)...); }
 	}	// internal namespace
 
 	template<typename T>
@@ -91,41 +103,44 @@ namespace vla
 		using pointer = T*;
 		using reference = T&;
 
-		explicit vla_iterator(pointer ptr = nullptr) : dynarray_ptr(ptr) {}
-		vla_iterator(const vla_iterator<T> &other_iterator) : dynarray_ptr(other_iterator.dynarray_ptr) {}
+		CPP20_DYNARRAY_CONSTEXPR explicit vla_iterator(pointer ptr = nullptr) : dynarray_ptr(ptr) {}
+		CPP20_DYNARRAY_CONSTEXPR vla_iterator(const vla_iterator<T> &other_iterator) : dynarray_ptr(other_iterator.dynarray_ptr) {}
 
 		// operators
 
-		reference operator*() const noexcept { return *dynarray_ptr; }
+		CPP20_DYNARRAY_CONSTEXPR reference operator*() const noexcept { return *dynarray_ptr; }
 
-		pointer operator->() const noexcept { return dynarray_ptr; }
+		CPP20_DYNARRAY_CONSTEXPR pointer operator->() const noexcept { return dynarray_ptr; }
 
-		reference operator[](difference_type offset) const noexcept { return dynarray_ptr[offset]; }
+		CPP20_DYNARRAY_CONSTEXPR reference operator[](difference_type offset) const noexcept { return dynarray_ptr[offset]; }
 
-		self_reference operator=(const self_value_type & right_iterator) noexcept { dynarray_ptr = right_iterator.dynarray_ptr; return *this; }
+		CPP20_DYNARRAY_CONSTEXPR self_reference operator=(const self_value_type & right_iterator) noexcept { dynarray_ptr = right_iterator.dynarray_ptr; return *this; }
 
-		self_reference operator=(pointer ptr) noexcept { dynarray_ptr = ptr; return *this; }
+		CPP20_DYNARRAY_CONSTEXPR self_reference operator=(pointer ptr) noexcept { dynarray_ptr = ptr; return *this; }
 
-		self_reference operator++() noexcept { ++dynarray_ptr; return *this; }
+		CPP20_DYNARRAY_CONSTEXPR self_reference operator++() noexcept { ++dynarray_ptr; return *this; }
 
-		self_value_type operator++(int) noexcept { return self_value_type(dynarray_ptr++); }
+		CPP20_DYNARRAY_CONSTEXPR self_value_type operator++(int) noexcept { return self_value_type(dynarray_ptr++); }
 
-		self_reference operator--() noexcept { --dynarray_ptr; return *this; }
+		CPP20_DYNARRAY_CONSTEXPR self_reference operator--() noexcept { --dynarray_ptr; return *this; }
 
-		self_value_type operator--(int) noexcept { return self_value_type(dynarray_ptr--); }
+		CPP20_DYNARRAY_CONSTEXPR self_value_type operator--(int) noexcept { return self_value_type(dynarray_ptr--); }
 
-		self_reference operator+=(difference_type offset) noexcept { dynarray_ptr += offset; return *this; }
+		CPP20_DYNARRAY_CONSTEXPR self_reference operator+=(difference_type offset) noexcept { dynarray_ptr += offset; return *this; }
 
-		self_reference operator-=(difference_type offset) noexcept { dynarray_ptr -= offset; return *this; }
+		CPP20_DYNARRAY_CONSTEXPR self_reference operator-=(difference_type offset) noexcept { dynarray_ptr -= offset; return *this; }
 
-		self_value_type operator+(difference_type offset) const noexcept { return self_value_type(dynarray_ptr) += offset; }
+		CPP20_DYNARRAY_CONSTEXPR self_value_type operator+(difference_type offset) const noexcept { return self_value_type(dynarray_ptr) += offset; }
 
-		self_value_type operator-(difference_type offset) const noexcept { return self_value_type(dynarray_ptr - offset); }
+		CPP20_DYNARRAY_CONSTEXPR self_value_type operator-(difference_type offset) const noexcept { return self_value_type(dynarray_ptr - offset); }
 
-		difference_type operator-(const self_value_type & right_iterator) const noexcept { return dynarray_ptr - right_iterator.dynarray_ptr; }
+		CPP20_DYNARRAY_CONSTEXPR difference_type operator-(const self_value_type & right_iterator) const noexcept { return dynarray_ptr - right_iterator.dynarray_ptr; }
 
-		bool operator==(const self_value_type &right_iterator) const noexcept { return dynarray_ptr == right_iterator.dynarray_ptr; }
+		CPP20_DYNARRAY_CONSTEXPR bool operator==(const self_value_type &right_iterator) const noexcept { return dynarray_ptr == right_iterator.dynarray_ptr; }
 
+#ifdef DYNARRAY_USING_CPP20
+		CPP20_DYNARRAY_CONSTEXPR auto operator<=>(const self_value_type &right_iterator) const noexcept = default;
+#else
 		bool operator!=(const self_value_type &right_iterator) const noexcept { return dynarray_ptr != right_iterator.dynarray_ptr; }
 
 		bool operator<(const self_value_type &right_iterator) const noexcept { return dynarray_ptr < right_iterator.dynarray_ptr; }
@@ -135,16 +150,14 @@ namespace vla
 		bool operator<=(const self_value_type &right_iterator) const noexcept { return dynarray_ptr <= right_iterator.dynarray_ptr; }
 
 		bool operator>=(const self_value_type &right_iterator) const noexcept { return dynarray_ptr >= right_iterator.dynarray_ptr; }
+#endif
+
+		friend CPP20_DYNARRAY_CONSTEXPR self_value_type operator+(typename difference_type offset, const self_value_type &other) noexcept { return self_value_type(other) += offset; }
 
 	private:
 		pointer dynarray_ptr;
 	};
 
-	template<typename T>
-	vla_iterator<T> operator+(typename vla_iterator<T>::difference_type offset, const vla_iterator<T> &other) noexcept
-	{
-		return vla_iterator<T>(other) += offset;
-	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	class dynarray
@@ -178,7 +191,7 @@ namespace vla
 		 * @brief Default Constructor.
 		 * Create a zero-size array.
 		 */
-		dynarray() noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray() noexcept
 		{
 			initialise();
 		}
@@ -189,7 +202,7 @@ namespace vla
 		 *
 		 * @param count The size (length) of array
 		 */
-		dynarray(size_type count)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count)
 		{
 			initialise();
 			if constexpr (N > 0)
@@ -204,7 +217,7 @@ namespace vla
 		 * @param other_allocator Your custom allocator
 		 */
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>>
-		dynarray(size_type count, _Alloc_t &&other_allocator)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count, _Alloc_t &&other_allocator)
 		{
 			initialise(other_allocator);
 			if constexpr (N > 0)
@@ -226,7 +239,7 @@ namespace vla
 		 * @param ...args If 'sizeof...(args)' is greater than the level of nested array, the rest of arg(s) will be used for initial array's elements.
 		 */
 		template<typename ... Args>
-		dynarray(size_type count, Args&& ... args)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count, Args&& ... args)
 		{
 			initialise();
 			if constexpr (N > 0)
@@ -241,7 +254,7 @@ namespace vla
 		 * @param ...args If 'sizeof...(args)' is greater than the level of nested array, the rest of arg(s) will be used for initial array's elements.
 		 */
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ... Args>
-		dynarray(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
 		{
 			initialise(other_allocator);
 			if constexpr (N > 0)
@@ -253,7 +266,7 @@ namespace vla
 		 * 
 		 * @param other Another array to be copied
 		 */
-		dynarray(const dynarray &other)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(const dynarray &other)
 		{
 			initialise();
 			if constexpr (N > 0)
@@ -265,7 +278,7 @@ namespace vla
 		 *
 		 * @param other Another array
 		 */
-		dynarray(dynarray &&other) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray(dynarray &&other) noexcept
 		{
 			if constexpr (N > 0)
 				move_array(other);
@@ -279,7 +292,7 @@ namespace vla
 		 * @param ...args Other dimention's allocator(s)
 		 */
 		template<typename ... Args>
-		dynarray(const dynarray &other, const allocator_type &other_allocator, Args&& ... args)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(const dynarray &other, const allocator_type &other_allocator, Args&& ... args)
 		{
 			initialise(other_allocator);
 			if constexpr (N > 0)
@@ -294,7 +307,7 @@ namespace vla
 		 */
 
 		template<typename InputIterator, typename = decltype(*std::declval<InputIterator&>(), ++std::declval<InputIterator&>(), void())>
-		dynarray(InputIterator other_begin, InputIterator other_end)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(InputIterator other_begin, InputIterator other_end)
 		{
 			initialise();
 			if constexpr (N > 0)
@@ -307,7 +320,7 @@ namespace vla
 		 * @param input_listYour initializer_list
 		 */
 		template<typename Ty>
-		dynarray(std::initializer_list<std::initializer_list<Ty>> input_list)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(std::initializer_list<std::initializer_list<Ty>> input_list)
 		{
 			initialise();
 			if constexpr (N > 0)
@@ -320,7 +333,7 @@ namespace vla
 		 * @param input_listYour initializer_list
 		 */
 		template<typename Ty, typename ... Args>
-		dynarray(std::initializer_list<std::initializer_list<Ty>> input_list, const allocator_type &other_allocator, Args&& ...args)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(std::initializer_list<std::initializer_list<Ty>> input_list, const allocator_type &other_allocator, Args&& ...args)
 		{
 			initialise(other_allocator);
 			if constexpr (N > 0)
@@ -335,7 +348,7 @@ namespace vla
 		 * @param other The right side of '='
 		 * @return A copied dynarray
 		 */
-		dynarray& operator=(const dynarray &other) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(const dynarray &other) noexcept
 		{
 			loop_copy(other);
 			return *this;
@@ -349,7 +362,7 @@ namespace vla
 		 * @param other The right side of '='
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(dynarray &&other) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(dynarray &&other) noexcept
 		{
 			move_values(other);
 			return *this;
@@ -361,7 +374,7 @@ namespace vla
 		 * @param input_list Your initializer_list
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(std::initializer_list<T> input_list) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(std::initializer_list<T> input_list) noexcept
 		{
 			loop_copy(input_list);
 			return *this;
@@ -374,7 +387,7 @@ namespace vla
 		 * @return A new dynarray
 		 */
 		template<typename Ty>
-		dynarray& operator=(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
 		{
 			loop_copy(input_list);
 			return *this;
@@ -384,7 +397,7 @@ namespace vla
 		 * @brief Deconstruct.
 		 * 
 		 */
-		~dynarray()
+		CPP20_DYNARRAY_CONSTEXPR ~dynarray()
 		{
 			deallocate_array();
 		}
@@ -399,7 +412,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		reference at(size_type pos);
+		CPP20_DYNARRAY_CONSTEXPR reference at(size_type pos);
 
 		/*!
 		 * @brief Returns a const reference to the element at specified location pos, with bounds checking.
@@ -409,7 +422,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		const_reference at(size_type pos) const;
+		CPP20_DYNARRAY_CONSTEXPR const_reference at(size_type pos) const;
 
 		/*!
 		 * Returns a reference to the element at specified location pos. No bounds checking is performed.
@@ -417,7 +430,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		reference operator[](size_type pos);
+		CPP20_DYNARRAY_CONSTEXPR reference operator[](size_type pos);
 
 		/*!
 		 * Returns a const reference to the element at specified location pos. No bounds checking is performed.
@@ -425,7 +438,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		constexpr const_reference operator[](size_type pos) const;
+		CPP20_DYNARRAY_CONSTEXPR const_reference operator[](size_type pos) const;
 
 		/*!
 		 * @brief Returns a reference to the first element in the container.
@@ -434,7 +447,7 @@ namespace vla
 		 * 
 		 * @return Reference to the first element
 		*/
-		reference front() { return (*this)[0]; }
+		CPP20_DYNARRAY_CONSTEXPR reference front() { return (*this)[0]; }
 
 		/*!
 		 * @brief Returns a const reference to the first element in the container.
@@ -443,7 +456,7 @@ namespace vla
 		 *
 		 * @return Const reference to the first element
 		*/
-		const_reference front() const { return (*this)[0]; }
+		CPP20_DYNARRAY_CONSTEXPR const_reference front() const { return (*this)[0]; }
 
 		/*!
 		 * @brief Returns a reference to the last element in the container.
@@ -452,7 +465,7 @@ namespace vla
 		 *
 		 * @return Reference to the last element
 		*/
-		reference back();
+		CPP20_DYNARRAY_CONSTEXPR reference back();
 
 		/*!
 		 * @brief Returns a const reference to the first element in the container.
@@ -461,7 +474,7 @@ namespace vla
 		 *
 		 * @return Const reference to the first element
 		*/
-		const_reference back() const;
+		CPP20_DYNARRAY_CONSTEXPR const_reference back() const;
 
 		/*!
 		 * @brief Returns pointer to the innermost underlying array serving as element storage.
@@ -472,7 +485,7 @@ namespace vla
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		 * 
 		*/
-		internal_pointer_type data() noexcept { return this_level_array_head; }
+		CPP20_DYNARRAY_CONSTEXPR internal_pointer_type data() noexcept { return this_level_array_head; }
 
 		/*!
 		 * @brief Returns const pointer to the innermost underlying array serving as element storage.
@@ -482,7 +495,7 @@ namespace vla
 		 * @return Const pointer to the innermost underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		const internal_pointer_type data() const noexcept { return this_level_array_head; }
+		CPP20_DYNARRAY_CONSTEXPR const internal_pointer_type data() const noexcept { return this_level_array_head; }
 
 		/*!
 		 * @brief Returns pointer to the underlying array serving as element storage.
@@ -492,7 +505,7 @@ namespace vla
 		 * @return Pointer to the underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		pointer get() noexcept { return current_dimension_array_data; }
+		CPP20_DYNARRAY_CONSTEXPR pointer get() noexcept { return current_dimension_array_data; }
 
 		/*!
 		 * @brief Returns const pointer to the underlying array serving as element storage.
@@ -502,19 +515,19 @@ namespace vla
 		 * @return Const pointer to the underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		const pointer get() const noexcept { return current_dimension_array_data; }
+		CPP20_DYNARRAY_CONSTEXPR const pointer get() const noexcept { return current_dimension_array_data; }
 
 		/*!
 		 * @brief Checks if the container has no elements.
 		 * @return true if the container is empty, false otherwise
 		*/
-		bool empty() const noexcept { return static_cast<bool>(current_dimension_array_size); }
+		CPP20_DYNARRAY_CONSTEXPR CPP20_DYNARRAY_NODISCARD bool empty() const noexcept { return static_cast<bool>(current_dimension_array_size); }
 
 		/*!
 		 * @brief Returns the number of elements in the container.
 		 * @return The number of elements in the container.
 		*/
-		size_type size() const noexcept { return current_dimension_array_size; }
+		CPP20_DYNARRAY_CONSTEXPR size_type size() const noexcept { return current_dimension_array_size; }
 
 		/*!
 		 * @brief Returns the maximum number of elements the container is able to hold due to system or library implementation limitations.
@@ -524,7 +537,7 @@ namespace vla
 		 * 
 		 * @return Maximum number of elements.
 		*/
-		size_type max_size() const noexcept { return std::numeric_limits<difference_type>::max(); }
+		CPP20_DYNARRAY_CONSTEXPR size_type max_size() const noexcept { return std::numeric_limits<difference_type>::max(); }
 
 		/*!
 		 * @brief Exchanges the contents of the container with those of other.
@@ -535,13 +548,13 @@ namespace vla
 		 * 
 		 * @param other dynarray to exchange the contents with
 		*/
-		void swap(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void swap(dynarray &other) noexcept;
 
 		/*!
 		 * @brief Assigns the given value value to all elements in the container.
 		 * @param value The value to assign to the elements
 		*/
-		void fill(const T& value);
+		CPP20_DYNARRAY_CONSTEXPR void fill(const T& value);
 
 
 		// Iterators
@@ -553,7 +566,7 @@ namespace vla
 		 * 
 		 * @return Iterator to the first element.
 		*/
-		iterator begin() noexcept { return iterator(current_dimension_array_data); }
+		CPP20_DYNARRAY_CONSTEXPR iterator begin() noexcept { return iterator(current_dimension_array_data); }
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -562,7 +575,7 @@ namespace vla
 		 *
 		 * @return Iterator to the first element.
 		*/
-		const_iterator begin() const noexcept { return const_iterator(current_dimension_array_data); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator begin() const noexcept { return const_iterator(current_dimension_array_data); }
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -571,7 +584,7 @@ namespace vla
 		 *
 		 * @return Iterator to the first element.
 		*/
-		const_iterator cbegin() const noexcept { return begin(); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator cbegin() const noexcept { return begin(); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -580,7 +593,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		iterator end() noexcept { return iterator(current_dimension_array_data + current_dimension_array_size); }
+		CPP20_DYNARRAY_CONSTEXPR iterator end() noexcept { return iterator(current_dimension_array_data + current_dimension_array_size); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -589,7 +602,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		const_iterator end() const noexcept { return const_iterator(current_dimension_array_data + current_dimension_array_size); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator end() const noexcept { return const_iterator(current_dimension_array_data + current_dimension_array_size); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -598,7 +611,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		const_iterator cend() const noexcept { return end(); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator cend() const noexcept { return end(); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the first element of the reversed vector.
@@ -607,7 +620,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the first element.
 		*/
-		reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
+		CPP20_DYNARRAY_CONSTEXPR reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the first element of the reversed vector.
@@ -616,7 +629,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the first element.
 		*/
-		const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the first element of the reversed vector.
@@ -625,7 +638,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the first element.
 		*/
-		const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(end()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(end()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the element following the last element of the reversed vector.
@@ -635,7 +648,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the element following the last element.
 		*/
-		reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
+		CPP20_DYNARRAY_CONSTEXPR reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the element following the last element of the reversed vector.
@@ -645,7 +658,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the element following the last element.
 		*/
-		const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the element following the last element of the reversed vector.
@@ -655,7 +668,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the element following the last element.
 		*/
-		const_reverse_iterator crend() const noexcept { return const_reverse_iterator(begin()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator crend() const noexcept { return const_reverse_iterator(begin()); }
 
 	private:
 
@@ -671,89 +684,138 @@ namespace vla
 		contiguous_allocator_type contiguous_allocator;
 
 
-		void initialise(const allocator_type &other_allocator = allocator_type());
+		CPP20_DYNARRAY_CONSTEXPR void initialise(const allocator_type &other_allocator = allocator_type());
 
-		void reset();
+		CPP20_DYNARRAY_CONSTEXPR void reset();
 
-		size_type get_block_size() const { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
+		CPP20_DYNARRAY_CONSTEXPR size_type get_block_size() const { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
 
 		template<typename Ty>
-		static size_type expand_list(std::initializer_list<Ty> init);
+		static CPP20_DYNARRAY_CONSTEXPR size_type expand_list(std::initializer_list<Ty> init);
 
 		template<typename ... Args>
-		static size_type expand_counts(size_type count, Args&& ... args);
+		static CPP20_DYNARRAY_CONSTEXPR size_type expand_counts(size_type count, Args&& ... args);
 
 		template<typename ... Args>
-		static contiguous_allocator_type expand_allocator(const allocator_type &_allocator, Args&& ... args);
+		static CPP20_DYNARRAY_CONSTEXPR contiguous_allocator_type expand_allocator(const allocator_type &_allocator, Args&& ... args);
 
 		template<typename Skip, typename ... Args>
-		static contiguous_allocator_type expand_allocators(const Skip &ignore, const allocator_type &_allocator, Args&& ... args);
+		static CPP20_DYNARRAY_CONSTEXPR contiguous_allocator_type expand_allocators(const Skip &ignore, const allocator_type &_allocator, Args&& ... args);
 
-		void verify_size(size_type count);
+		CPP20_DYNARRAY_CONSTEXPR void verify_size(size_type count);
 
-		void allocate_array(size_type count);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(size_type count);
 
-		void allocate_array(internal_pointer_type starting_address, size_type count);
-
-		template<typename ...Args>
-		void allocate_array(size_type count, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(internal_pointer_type starting_address, size_type count);
 
 		template<typename ...Args>
-		void allocate_array(internal_pointer_type starting_address, size_type count, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(size_type count, Args&& ... args);
+
+		template<typename ...Args>
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(internal_pointer_type starting_address, size_type count, Args&& ... args);
 
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ...Args>
-		void allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args);
 
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ...Args>
-		void allocate_array(internal_pointer_type starting_address, size_type count, _Alloc_t &&other_allocator, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(internal_pointer_type starting_address, size_type count, _Alloc_t &&other_allocator, Args&& ... args);
 
 		template<typename Ty, typename ... Args>
-		void allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list, Args&& ...args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list, Args&& ...args);
 
 		template<typename Ty, typename ... Args>
-		void allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list, const allocator_type &other_allocator = allocator_type(), Args&& ...args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list,
+		                                             const allocator_type &other_allocator = allocator_type(), Args&& ...args);
 
-		void deallocate_array();
+		CPP20_DYNARRAY_CONSTEXPR void deallocate_array();
 
-		void copy_array(const dynarray &other);
-
-		template<typename ...Args>
-		void copy_array(const dynarray &other, const allocator_type &other_allocator, Args&& ... args);
-
-		void copy_array(internal_pointer_type starting_address, const dynarray &other);
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(const dynarray &other);
 
 		template<typename ...Args>
-		void copy_array(internal_pointer_type starting_address, const dynarray &other, const allocator_type &other_allocator, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(const dynarray &other, const allocator_type &other_allocator, Args&& ... args);
+
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(internal_pointer_type starting_address, const dynarray &other);
+
+		template<typename ...Args>
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(internal_pointer_type starting_address, const dynarray &other,
+		                                         const allocator_type &other_allocator, Args&& ... args);
 
 		template<typename InputIterator>
-		void copy_array(InputIterator other_begin, InputIterator other_end);
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(InputIterator other_begin, InputIterator other_end);
 
-		void loop_copy(const dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void loop_copy(const dynarray &other) noexcept;
 
-		void loop_copy(std::initializer_list<T> input_list) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void loop_copy(std::initializer_list<T> input_list) noexcept;
 
 		template<typename Ty>
-		void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept;
 
-		void move_array(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void move_array(dynarray &other) noexcept;
 
-		void move_values(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void move_values(dynarray &other) noexcept;
 
-		void swap_all(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void swap_all(dynarray &other) noexcept;
 
-		void swap_outside(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void swap_outside(dynarray &other) noexcept;
 
 
 		/**** Non-member functions  ***/
 
-		friend void swap(dynarray &lhs, dynarray &rhs) noexcept;
+		/*!
+		 * @brief Exchanges the contents of the container with those of other.
+		 *
+		 * If both of the containers are outter-most layer, they will be swapped completely, including sizes.
+		 *
+		 * Otherwise swap the contents only.
+		 *
+		 * @param lhs A dynarray
+		 * @param rhs Another dynarray
+		 * @return
+		*/
+		friend CPP20_DYNARRAY_CONSTEXPR void swap(dynarray &lhs, dynarray &rhs) noexcept { lhs.swap_outside(rhs); }
 
-		friend dynarray exchange(dynarray &old_array, dynarray &&new_array) noexcept;
+		/*!
+		 * @brief Replaces old_array with new_array and returns the old value of old_array.
+		 *
+		 * If old_array is an inner layer, exchange() will replaces the contents of the container only, the size of old_array will keeps unchanged.
+		 *
+		 * @param old_array Old array to be replaced
+		 * @param new_array New array replace with
+		 * @return The value of old_array
+		*/
+		friend CPP20_DYNARRAY_CONSTEXPR dynarray exchange(dynarray &old_array, dynarray &&new_array) noexcept
+		{
+			dynarray current_array = std::move(old_array);
+			if (old_array.entire_array_data == nullptr && old_array.current_dimension_array_size > 0)
+			{
+				old_array.swap(new_array);
+			}
+			else
+			{
+				if (new_array.entire_array_data == nullptr && new_array.current_dimension_array_size > 0)
+				{
+					dynarray temp_array = std::move(new_array);
+					old_array.swap_all(temp_array);
+				}
+				else
+				{
+					old_array.swap_all(new_array);
+				}
+			}
+			return current_array;
+		}
 
-		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
+		friend CPP20_DYNARRAY_CONSTEXPR bool operator==(const dynarray &lhs, const dynarray &rhs)
 		{
 			return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 		}
+
+#ifdef DYNARRAY_USING_CPP20
+		friend CPP20_DYNARRAY_CONSTEXPR auto operator<=>(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+#else
 
 		friend bool operator!=(const dynarray &lhs, const dynarray &rhs)
 		{
@@ -779,11 +841,12 @@ namespace vla
 		{
 			return !(lhs < rhs);
 		}
+#endif
 	};
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename Ty>
-	inline typename dynarray<T, N, _Allocator>::size_type
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::size_type
 	dynarray<T, N, _Allocator>::expand_list(std::initializer_list<Ty> init)
 	{
 		size_type count = 0;
@@ -794,7 +857,7 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline typename dynarray<T, N, _Allocator>::size_type
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::size_type
 	dynarray<T, N, _Allocator>::expand_counts(size_type count, Args && ...args)
 	{
 		return value_type::expand_counts(std::forward<Args>(args)...) * count;
@@ -802,7 +865,7 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline typename dynarray<T, N, _Allocator>::contiguous_allocator_type
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::contiguous_allocator_type
 	dynarray<T, N, _Allocator>::expand_allocator(const allocator_type &_allocator, Args && ...args)
 	{
 		if constexpr (sizeof...(args) == 0)
@@ -813,7 +876,7 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename Skip, typename ...Args>
-	inline typename dynarray<T, N, _Allocator>::contiguous_allocator_type
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::contiguous_allocator_type
 	dynarray<T, N, _Allocator>::expand_allocators(const Skip &skip, const allocator_type &_allocator, Args && ...args)
 	{
 		if constexpr (sizeof...(args) == 0)
@@ -823,7 +886,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::initialise(const allocator_type &other_allocator)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::initialise(const allocator_type &other_allocator)
 	{
 		contiguous_allocator = contiguous_allocator_type();
 
@@ -832,7 +896,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::reset()
+	inline CPP20_DYNARRAY_CONSTEXPR
+	void dynarray<T, N, _Allocator>::reset()
 	{
 		entire_array_data = nullptr;
 		current_dimension_array_size = 0;
@@ -842,14 +907,16 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::verify_size(size_type count)
+	inline CPP20_DYNARRAY_CONSTEXPR
+	void dynarray<T, N, _Allocator>::verify_size(size_type count)
 	{
 		if (count > static_cast<size_type>(std::numeric_limits<difference_type>::max()))
 			throw std::length_error("array too long");
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::allocate_array(size_type count)
+	inline CPP20_DYNARRAY_CONSTEXPR
+	void dynarray<T, N, _Allocator>::allocate_array(size_type count)
 	{
 		if (count == 0)
 		{
@@ -868,14 +935,16 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count)
 	{
 		reset();
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename ... Args>
-	inline void dynarray<T, N, _Allocator>::allocate_array(size_type count, Args&& ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::allocate_array(size_type count, Args&& ...args)
 	{
 		verify_size(count);
 
@@ -909,7 +978,8 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename ... Args>
-	inline void dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count, Args&& ... args)
 	{
 		entire_array_data = nullptr;	// always nullptr in nested-dynarray
 
@@ -931,7 +1001,8 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename _Alloc_t, typename, typename ... Args>
-	inline void dynarray<T, N, _Allocator>::allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
 	{
 		verify_size(count);
 
@@ -966,8 +1037,8 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename _Alloc_t, typename, typename ...Args>
-	inline void dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count,
-	                                                       _Alloc_t &&other_allocator, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, size_type count, _Alloc_t &&other_allocator, Args&& ... args)
 	{
 		entire_array_data = nullptr;	// always nullptr in nested-dynarray
 		array_allocator = other_allocator;
@@ -992,7 +1063,8 @@ namespace vla
 
 	template<typename T, std::size_t N,template<typename U> typename _Allocator>
 	template<typename Ty, typename ... Args>
-	inline void dynarray<T, N, _Allocator>::allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list, Args&& ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::allocate_array(std::initializer_list<std::initializer_list<Ty>> input_list, Args&& ...args)
 	{
 		size_type count = input_list.size();
 		if (count == 0) return;
@@ -1023,7 +1095,9 @@ namespace vla
 
 	template<typename T, std::size_t N,template<typename U> typename _Allocator>
 	template<typename Ty, typename ... Args>
-	inline void dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list, const allocator_type &other_allocator, Args&& ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::allocate_array(internal_pointer_type starting_address, std::initializer_list<Ty> input_list,
+	                                           const allocator_type &other_allocator, Args&& ...args)
 	{
 		array_allocator = other_allocator;
 		size_type count = input_list.size();
@@ -1047,7 +1121,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::deallocate_array()
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::deallocate_array()
 	{
 		if (current_dimension_array_data)
 		{
@@ -1068,7 +1143,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N,template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::copy_array(const dynarray &other)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::copy_array(const dynarray &other)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		if (entire_array_size == 0 || other.current_dimension_array_size == 0) return;
@@ -1093,7 +1169,8 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline void dynarray<T, N, _Allocator>::copy_array(const dynarray &other, const allocator_type &other_allocator, Args&&... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::copy_array(const dynarray &other, const allocator_type &other_allocator, Args&&... args)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		if (entire_array_size == 0 || other.current_dimension_array_size == 0) return;
@@ -1120,7 +1197,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other)
 	{
 		current_dimension_array_size = other.current_dimension_array_size;
 		entire_array_data = nullptr;
@@ -1139,8 +1217,9 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline void dynarray<T, N, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other,
-	                                                   const allocator_type &other_allocator, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::copy_array(internal_pointer_type starting_address, const dynarray & other,
+	                                       const allocator_type &other_allocator, Args&& ... args)
 	{
 		array_allocator = other_allocator;
 		current_dimension_array_size = other.current_dimension_array_size;
@@ -1161,7 +1240,8 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename InputIterator>
-	inline void dynarray<T, N, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
 	{
 		static_assert(std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator> ||
 		              std::is_same_v<InputIterator, reverse_iterator> || std::is_same_v<InputIterator, const_reverse_iterator>,
@@ -1194,7 +1274,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::loop_copy(const dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::loop_copy(const dynarray &other) noexcept
 	{
 		if (size() == 0 || other.size() == 0) return;
 
@@ -1203,7 +1284,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::loop_copy(std::initializer_list<T> input_list) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::loop_copy(std::initializer_list<T> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
@@ -1215,7 +1297,8 @@ namespace vla
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
 	template<typename Ty>
-	inline void dynarray<T, N, _Allocator>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::loop_copy(std::initializer_list<std::initializer_list<Ty>> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
@@ -1226,7 +1309,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::move_array(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::move_array(dynarray &other) noexcept
 	{
 		if (other.entire_array_data == nullptr)
 		{
@@ -1266,7 +1350,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::move_values(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::move_values(dynarray &other) noexcept
 	{
 		if (size() == 0 || other.size() == 0) return;
 
@@ -1275,7 +1360,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::swap_all(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::swap_all(dynarray &other) noexcept
 	{
 		std::swap(entire_array_data, other.entire_array_data);
 		std::swap(current_dimension_array_size, other.current_dimension_array_size);
@@ -1287,7 +1373,8 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::swap_outside(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::swap_outside(dynarray &other) noexcept
 	{
 		if ((entire_array_data == nullptr && current_dimension_array_size > 0) ||
 			(other.entire_array_data == nullptr && other.current_dimension_array_size > 0))
@@ -1297,7 +1384,7 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline typename dynarray<T, N, _Allocator>::reference
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::reference
 	dynarray<T, N, _Allocator>::at(size_type pos)
 	{
 		if (pos >= size())
@@ -1306,7 +1393,7 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline typename dynarray<T, N, _Allocator>::const_reference
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::const_reference
 	dynarray<T, N, _Allocator>::at(size_type pos) const
 	{
 		if (pos >= size())
@@ -1315,96 +1402,49 @@ namespace vla
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline typename dynarray<T, N, _Allocator>::reference
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::reference
 	dynarray<T, N, _Allocator>::operator[](size_type pos)
 	{
 		return *(current_dimension_array_data + pos);
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline constexpr typename dynarray<T, N, _Allocator>::const_reference
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::const_reference
 	dynarray<T, N, _Allocator>::operator[](size_type pos) const
 	{
 		return *(current_dimension_array_data + pos);
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline typename dynarray<T, N, _Allocator>::reference
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::reference
 	dynarray<T, N, _Allocator>::back()
 	{
 		return (*this)[current_dimension_array_size - 1];
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline typename dynarray<T, N, _Allocator>::const_reference
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, N, _Allocator>::const_reference
 	dynarray<T, N, _Allocator>::back() const
 	{
 		return (*this)[current_dimension_array_size - 1];
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::swap(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::swap(dynarray &other) noexcept
 	{
 		for (size_type i = 0; i < current_dimension_array_size && i < other.current_dimension_array_size; ++i)
 			(current_dimension_array_data + i)->swap(other[i]);
 	}
 
 	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	inline void dynarray<T, N, _Allocator>::fill(const T & value)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, N, _Allocator>::fill(const T & value)
 	{
 		for (auto current_address = this_level_array_head;
 			current_address != this_level_array_tail + 1;
 			++current_address)
 			*current_address = value;
-	}
-
-	/*!
-	 * @brief Exchanges the contents of the container with those of other.
-	 *
-	 * If both of the containers are outter-most layer, they will be swapped completely, including sizes.
-	 *
-	 * Otherwise swap the contents only.
-	 *
-	 * @param lhs A dynarray
-	 * @param rhs Another dynarray
-	 * @return
-	*/
-	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	void swap(dynarray<T, N, _Allocator> &lhs, dynarray<T, N, _Allocator> &rhs) noexcept
-	{
-		lhs.swap_outside(rhs);
-	}
-
-	/*!
-	 * @brief Replaces old_array with new_array and returns the old value of old_array.
-	 *
-	 * If old_array is an inner layer, exchange() will replaces the contents of the container only, the size of old_array will keeps unchanged.
-	 *
-	 * @param old_array Old array to be replaced
-	 * @param new_array New array replace with
-	 * @return The value of old_array
-	*/
-	template<typename T, std::size_t N, template<typename U> typename _Allocator>
-	dynarray<T, N, _Allocator> exchange(dynarray<T, N, _Allocator> &old_array, dynarray<T, N, _Allocator> &&new_array) noexcept
-	{
-		dynarray current_array = std::move(old_array);
-		if (old_array.entire_array_data == nullptr && old_array.current_dimension_array_size > 0)
-		{
-			old_array.swap(new_array);
-		}
-		else
-		{
-			if (new_array.entire_array_data == nullptr && new_array.current_dimension_array_size > 0)
-			{
-				dynarray temp_array = std::move(new_array);
-				old_array.swap_all(temp_array);
-			}
-			else
-			{
-				old_array.swap_all(new_array);
-			}
-		}
-		return current_array;
 	}
 
 
@@ -1438,7 +1478,7 @@ namespace vla
 		 * @brief Default Constructor.
 		 * Create a zero-size array.
 		 */
-		dynarray() noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray() noexcept
 		{
 			initialise();
 		}
@@ -1449,7 +1489,7 @@ namespace vla
 		 *
 		 * @param count The size (length) of array
 		 */
-		dynarray(size_type count)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count)
 		{
 			initialise();
 			allocate_array(count);
@@ -1463,7 +1503,7 @@ namespace vla
 		 * @param other_allocator Your custom allocator
 		 */
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>>
-		dynarray(size_type count, _Alloc_t &&other_allocator)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count, _Alloc_t &&other_allocator)
 		{
 			initialise(other_allocator);
 			allocate_array(count);
@@ -1484,7 +1524,7 @@ namespace vla
 		 * @param ...args If 'sizeof...(args)' is greater than the level of nested array, the rest of arg(s) will be used for initial array's elements.
 		 */
 		template<typename ... Args>
-		dynarray(size_type count, Args&& ... args)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count, Args&& ... args)
 		{
 			initialise();
 			allocate_array(count, std::forward<Args>(args)...);
@@ -1498,7 +1538,7 @@ namespace vla
 		 * @param ...args If 'sizeof...(args)' is greater than the level of nested array, the rest of arg(s) will be used for initial array's elements.
 		 */
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ... Args>
-		dynarray(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
 		{
 			initialise(other_allocator);
 			allocate_array(count, other_allocator, std::forward<Args>(args)...);
@@ -1509,7 +1549,7 @@ namespace vla
 		 *
 		 * @param other Another array to be copied
 		 */
-		dynarray(const dynarray &other)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(const dynarray &other)
 		{
 			initialise();
 			copy_array(other);
@@ -1520,7 +1560,7 @@ namespace vla
 		 *
 		 * @param other Another array
 		 */
-		dynarray(dynarray &&other) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray(dynarray &&other) noexcept
 		{
 			move_array(other);
 		}
@@ -1533,7 +1573,7 @@ namespace vla
 		 * @param ...args Other dimention's allocator(s)
 		 */
 		template<typename ... Args>
-		dynarray(const dynarray &other, const allocator_type &other_allocator, Args&& ... args)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(const dynarray &other, const allocator_type &other_allocator, Args&& ... args)
 		{
 			initialise(other_allocator);
 			copy_array(other, other_allocator, std::forward<Args>(args)...);
@@ -1547,7 +1587,7 @@ namespace vla
 		 */
 
 		template<typename InputIterator, typename = decltype(*std::declval<InputIterator&>(), ++std::declval<InputIterator&>(), void())>
-		dynarray(InputIterator other_begin, InputIterator other_end)
+		CPP20_DYNARRAY_CONSTEXPR dynarray(InputIterator other_begin, InputIterator other_end)
 		{
 			initialise();
 			copy_array(other_begin, other_end);
@@ -1559,7 +1599,7 @@ namespace vla
 		 * @param input_list Your initializer_list
 		 * @param other_allocator Your allocator (if any)
 		 */
-		dynarray(std::initializer_list<T> input_list, const allocator_type &other_allocator = allocator_type())
+		CPP20_DYNARRAY_CONSTEXPR dynarray(std::initializer_list<T> input_list, const allocator_type &other_allocator = allocator_type())
 		{
 			initialise(other_allocator);
 			allocate_array(input_list);
@@ -1573,7 +1613,7 @@ namespace vla
 		 * @param other The right side of '='
 		 * @return A copied dynarray
 		 */
-		dynarray& operator=(const dynarray &other) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(const dynarray &other) noexcept
 		{
 			loop_copy(other);
 			return *this;
@@ -1587,7 +1627,7 @@ namespace vla
 		 * @param other The right side of '='
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(dynarray &&other) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(dynarray &&other) noexcept
 		{
 			move_values(other);
 			return *this;
@@ -1599,7 +1639,7 @@ namespace vla
 		 * @param input_list Your initializer_list
 		 * @return A new dynarray
 		 */
-		dynarray& operator=(std::initializer_list<T> input_list) noexcept
+		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(std::initializer_list<T> input_list) noexcept
 		{
 			loop_copy(input_list);
 			return *this;
@@ -1609,7 +1649,7 @@ namespace vla
 		 * @brief Deconstruct.
 		 *
 		 */
-		~dynarray()
+		CPP20_DYNARRAY_CONSTEXPR ~dynarray()
 		{
 			deallocate_array();
 		}
@@ -1624,7 +1664,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		reference at(size_type pos);
+		CPP20_DYNARRAY_CONSTEXPR reference at(size_type pos);
 
 		/*!
 		 * @brief Returns a const reference to the element at specified location pos, with bounds checking.
@@ -1634,7 +1674,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		const_reference at(size_type pos) const;
+		CPP20_DYNARRAY_CONSTEXPR const_reference at(size_type pos) const;
 
 		/*!
 		 * Returns a reference to the element at specified location pos. No bounds checking is performed.
@@ -1642,7 +1682,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		reference operator[](size_type pos);
+		CPP20_DYNARRAY_CONSTEXPR reference operator[](size_type pos);
 
 		/*!
 		 * Returns a const reference to the element at specified location pos. No bounds checking is performed.
@@ -1650,7 +1690,7 @@ namespace vla
 		 * @param pos Position of the element to return
 		 * @return Reference to the requested element
 		*/
-		constexpr const_reference operator[](size_type pos) const;
+		CPP20_DYNARRAY_CONSTEXPR const_reference operator[](size_type pos) const;
 
 		/*!
 		 * @brief Returns a reference to the first element in the container.
@@ -1659,7 +1699,7 @@ namespace vla
 		 *
 		 * @return Reference to the first element
 		*/
-		reference front() { return (*this)[0]; }
+		CPP20_DYNARRAY_CONSTEXPR reference front() { return (*this)[0]; }
 
 		/*!
 		 * @brief Returns a const reference to the first element in the container.
@@ -1668,7 +1708,7 @@ namespace vla
 		 *
 		 * @return Const reference to the first element
 		*/
-		const_reference front() const { return (*this)[0]; }
+		CPP20_DYNARRAY_CONSTEXPR const_reference front() const { return (*this)[0]; }
 
 		/*!
 		 * @brief Returns a reference to the last element in the container.
@@ -1677,7 +1717,7 @@ namespace vla
 		 *
 		 * @return Reference to the last element
 		*/
-		reference back();
+		CPP20_DYNARRAY_CONSTEXPR reference back();
 
 		/*!
 		 * @brief Returns a const reference to the first element in the container.
@@ -1686,7 +1726,7 @@ namespace vla
 		 *
 		 * @return Const reference to the first element
 		*/
-		const_reference back() const;
+		CPP20_DYNARRAY_CONSTEXPR const_reference back() const;
 
 		/*!
 		 * @brief Returns pointer to the innermost underlying array serving as element storage.
@@ -1697,7 +1737,7 @@ namespace vla
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		 *
 		*/
-		pointer data() noexcept { return this_level_array_head; }
+		CPP20_DYNARRAY_CONSTEXPR pointer data() noexcept { return this_level_array_head; }
 
 		/*!
 		 * @brief Returns const pointer to the innermost underlying array serving as element storage.
@@ -1707,7 +1747,7 @@ namespace vla
 		 * @return Const pointer to the innermost underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		const pointer data() const noexcept { return this_level_array_head; }
+		CPP20_DYNARRAY_CONSTEXPR const pointer data() const noexcept { return this_level_array_head; }
 
 		/*!
 		 * @brief Returns pointer to the underlying array serving as element storage.
@@ -1717,7 +1757,7 @@ namespace vla
 		 * @return Pointer to the underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		pointer get() noexcept { return this_level_array_head; }
+		CPP20_DYNARRAY_CONSTEXPR pointer get() noexcept { return this_level_array_head; }
 
 		/*!
 		 * @brief Returns const pointer to the underlying array serving as element storage.
@@ -1727,19 +1767,19 @@ namespace vla
 		 * @return Const pointer to the underlying element storage.
 		 * For non-empty containers, the returned pointer compares equal to the address of the first element.
 		*/
-		const pointer get() const noexcept { return this_level_array_head; }
+		CPP20_DYNARRAY_CONSTEXPR const pointer get() const noexcept { return this_level_array_head; }
 
 		/*!
 		 * @brief Checks if the container has no elements.
 		 * @return true if the container is empty, false otherwise
 		*/
-		bool empty() const noexcept { return static_cast<bool>(this_level_array_tail - this_level_array_head + 1); }
+		CPP20_DYNARRAY_CONSTEXPR CPP20_DYNARRAY_NODISCARD bool empty() const noexcept { return static_cast<bool>(this_level_array_tail - this_level_array_head + 1); }
 
 		/*!
 		 * @brief Returns the number of elements in the container.
 		 * @return The number of elements in the container.
 		*/
-		size_type size() const noexcept { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
+		CPP20_DYNARRAY_CONSTEXPR size_type size() const noexcept { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
 
 		/*!
 		 * @brief Returns the maximum number of elements the container is able to hold due to system or library implementation limitations.
@@ -1749,7 +1789,7 @@ namespace vla
 		 *
 		 * @return Maximum number of elements.
 		*/
-		size_type max_size() const noexcept { return std::numeric_limits<difference_type>::max(); }
+		CPP20_DYNARRAY_CONSTEXPR size_type max_size() const noexcept { return std::numeric_limits<difference_type>::max(); }
 
 		/*!
 		 * @brief Exchanges the contents of the container with those of other.
@@ -1760,13 +1800,13 @@ namespace vla
 		 *
 		 * @param other dynarray to exchange the contents with
 		*/
-		void swap(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void swap(dynarray &other) noexcept;
 
 		/*!
 		 * @brief Assigns the given value value to all elements in the container.
 		 * @param value The value to assign to the elements
 		*/
-		void fill(const value_type &value);
+		CPP20_DYNARRAY_CONSTEXPR void fill(const value_type &value);
 
 
 		// Iterators
@@ -1778,7 +1818,7 @@ namespace vla
 		 *
 		 * @return Iterator to the first element.
 		*/
-		iterator begin() noexcept { return iterator(this_level_array_head); }
+		CPP20_DYNARRAY_CONSTEXPR iterator begin() noexcept { return iterator(this_level_array_head); }
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -1787,7 +1827,7 @@ namespace vla
 		 *
 		 * @return Iterator to the first element.
 		*/
-		const_iterator begin() const noexcept { return const_iterator(this_level_array_head); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator begin() const noexcept { return const_iterator(this_level_array_head); }
 
 		/*!
 		 * @brief Returns an iterator to the first element of the vector.
@@ -1796,7 +1836,7 @@ namespace vla
 		 *
 		 * @return Iterator to the first element.
 		*/
-		const_iterator cbegin() const noexcept { return begin(); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator cbegin() const noexcept { return begin(); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -1805,7 +1845,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		iterator end() noexcept { return iterator(this_level_array_tail + 1); }
+		CPP20_DYNARRAY_CONSTEXPR iterator end() noexcept { return iterator(this_level_array_tail + 1); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -1814,7 +1854,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		const_iterator end() const noexcept { return const_iterator(this_level_array_tail + 1); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator end() const noexcept { return const_iterator(this_level_array_tail + 1); }
 
 		/*!
 		 * @brief Returns an iterator to the element following the last element of the vector.
@@ -1823,7 +1863,7 @@ namespace vla
 		 *
 		 * @return Iterator to the element following the last element.
 		*/
-		const_iterator cend() const noexcept { return end(); }
+		CPP20_DYNARRAY_CONSTEXPR const_iterator cend() const noexcept { return end(); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the first element of the reversed vector.
@@ -1832,7 +1872,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the first element.
 		*/
-		reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
+		CPP20_DYNARRAY_CONSTEXPR reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the first element of the reversed vector.
@@ -1841,7 +1881,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the first element.
 		*/
-		const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the first element of the reversed vector.
@@ -1850,7 +1890,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the first element.
 		*/
-		const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(end()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(end()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the element following the last element of the reversed vector.
@@ -1860,7 +1900,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the element following the last element.
 		*/
-		reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
+		CPP20_DYNARRAY_CONSTEXPR reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the element following the last element of the reversed vector.
@@ -1870,7 +1910,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the element following the last element.
 		*/
-		const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
 
 		/*!
 		 * @brief Returns a reverse iterator to the element following the last element of the reversed vector.
@@ -1880,7 +1920,7 @@ namespace vla
 		 *
 		 * @return Reverse iterator to the element following the last element.
 		*/
-		const_reverse_iterator crend() const noexcept { return const_reverse_iterator(begin()); }
+		CPP20_DYNARRAY_CONSTEXPR const_reverse_iterator crend() const noexcept { return const_reverse_iterator(begin()); }
 
 	private:
 
@@ -1892,86 +1932,133 @@ namespace vla
 		contiguous_allocator_type contiguous_allocator;
 
 
-		void initialise(const allocator_type &other_allocator = allocator_type());
+		CPP20_DYNARRAY_CONSTEXPR void initialise(const allocator_type &other_allocator = allocator_type());
 
-		void reset();
+		CPP20_DYNARRAY_CONSTEXPR void reset();
 
-		size_type get_block_size() const { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
+		CPP20_DYNARRAY_CONSTEXPR size_type get_block_size() const { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
 
 		template<typename Ty>
-		static size_type expand_list(std::initializer_list<Ty> init);
+		static CPP20_DYNARRAY_CONSTEXPR size_type expand_list(std::initializer_list<Ty> init);
 
 		template<typename ... Args>
-		static size_type expand_counts(size_type count, Args&& ... args);
+		static CPP20_DYNARRAY_CONSTEXPR size_type expand_counts(size_type count, Args&& ... args);
 
 		template<typename ... Args>
-		static contiguous_allocator_type expand_allocator(const allocator_type &_allocator, Args&& ... args);
+		static CPP20_DYNARRAY_CONSTEXPR contiguous_allocator_type expand_allocator(const allocator_type &_allocator, Args&& ... args);
 
 		template<typename Skip, typename ... Args>
-		static contiguous_allocator_type expand_allocators(const Skip &ignore, const allocator_type &_allocator, Args&& ... args);
+		static CPP20_DYNARRAY_CONSTEXPR contiguous_allocator_type expand_allocators(const Skip &ignore, const allocator_type &_allocator, Args&& ... args);
 
-		void verify_size(size_type count);
+		CPP20_DYNARRAY_CONSTEXPR void verify_size(size_type count);
 
-		void allocate_array(size_type count);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(size_type count);
 
 		//void allocate_array(pointer starting_address, size_type count);
 
 		template<typename ...Args>
-		void allocate_array(size_type count, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(size_type count, Args&& ... args);
 
 		template<typename ...Args>
-		void allocate_array(pointer starting_address, size_type count, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(pointer starting_address, size_type count, Args&& ... args);
 
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ...Args>
-		void allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args);
 
 		template<typename _Alloc_t, typename = std::enable_if_t<std::is_same_v<std::decay_t<_Alloc_t>, allocator_type>>, typename ...Args>
-		void allocate_array(pointer starting_address, size_type count, _Alloc_t &&other_allocator, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(pointer starting_address, size_type count, _Alloc_t &&other_allocator, Args&& ... args);
 
-		void allocate_array(std::initializer_list<T> input_list);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(std::initializer_list<T> input_list);
 
 		template<typename ... Args>
-		void allocate_array(pointer starting_address, std::initializer_list<T> input_list, const allocator_type &other_allocator = allocator_type(), Args&& ...args);
+		CPP20_DYNARRAY_CONSTEXPR void allocate_array(pointer starting_address, std::initializer_list<T> input_list,
+		                                             const allocator_type &other_allocator = allocator_type(), Args&& ...args);
 
-		void deallocate_array();
+		CPP20_DYNARRAY_CONSTEXPR void deallocate_array();
 
-		void copy_array(const dynarray &other);
-
-		template<typename ...Args>
-		void copy_array(const dynarray &other, const allocator_type &other_allocator, Args&& ... args);
-
-		void copy_array(pointer starting_address, const dynarray &other);
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(const dynarray &other);
 
 		template<typename ...Args>
-		void copy_array(pointer starting_address, const dynarray &other, const allocator_type &other_allocator, Args&& ... args);
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(const dynarray &other, const allocator_type &other_allocator, Args&& ... args);
+
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(pointer starting_address, const dynarray &other);
+
+		template<typename ...Args>
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(pointer starting_address, const dynarray &other, const allocator_type &other_allocator, Args&& ... args);
 
 		template<typename InputIterator>
-		void copy_array(InputIterator other_begin, InputIterator other_end);
+		CPP20_DYNARRAY_CONSTEXPR void copy_array(InputIterator other_begin, InputIterator other_end);
 
-		void loop_copy(const dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void loop_copy(const dynarray &other) noexcept;
 
-		void loop_copy(std::initializer_list<T> input_list) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void loop_copy(std::initializer_list<T> input_list) noexcept;
 
-		void move_array(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void move_array(dynarray &other) noexcept;
 
-		void move_values(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void move_values(dynarray &other) noexcept;
 
-		void swap_all(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void swap_all(dynarray &other) noexcept;
 
-		void swap_outside(dynarray &other) noexcept;
+		CPP20_DYNARRAY_CONSTEXPR void swap_outside(dynarray &other) noexcept;
 
 
 		/**** Non-member functions  ***/
 
-		friend void swap(dynarray &lhs, dynarray &rhs) noexcept;
+		/*!
+		 * @brief Exchanges the contents of the container with those of other.
+		 *
+		 * If both of the containers are outter-most layer, they will be swapped completely, including sizes.
+		 *
+		 * Otherwise swap the contents only.
+		 *
+		 * @param lhs A dynarray
+		 * @param rhs Another dynarray
+		 * @return
+		*/
+		friend CPP20_DYNARRAY_CONSTEXPR void swap(dynarray &lhs, dynarray &rhs) noexcept { lhs.swap_outside(rhs); }
 
-		friend dynarray exchange(dynarray &old_array, dynarray &&new_array) noexcept;
+		/*!
+		 * @brief Replaces old_array with new_array and returns the old value of old_array.
+		 *
+		 * If old_array is an inner layer, exchange() will replaces the contents of the container only, the size of old_array will keeps unchanged.
+		 *
+		 * @param old_array Old array to be replaced
+		 * @param new_array New array replace with
+		 * @return The value of old_array
+		*/
+		friend CPP20_DYNARRAY_CONSTEXPR dynarray exchange(dynarray &old_array, dynarray &&new_array) noexcept
+		{
+			dynarray current_array = std::move(old_array);
+			if (old_array.entire_array_data == nullptr)
+			{
+				old_array.swap(new_array);
+			}
+			else
+			{
+				if (new_array.entire_array_data == nullptr)
+				{
+					dynarray temp_array = std::move(new_array);
+					old_array.swap_all(temp_array);
+				}
+				else
+				{
+					old_array.swap_all(new_array);
+				}
+			}
+			return current_array;
+		}
 
-		friend bool operator==(const dynarray &lhs, const dynarray &rhs)
+		friend CPP20_DYNARRAY_CONSTEXPR bool operator==(const dynarray &lhs, const dynarray &rhs)
 		{
 			return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 		}
 
+#ifdef DYNARRAY_USING_CPP20
+		friend CPP20_DYNARRAY_CONSTEXPR auto operator<=>(const dynarray &lhs, const dynarray &rhs)
+		{
+			return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+#else
 		friend bool operator!=(const dynarray &lhs, const dynarray &rhs)
 		{
 			return !(lhs == rhs);
@@ -1996,49 +2083,52 @@ namespace vla
 		{
 			return !(lhs < rhs);
 		}
+#endif
 	};
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename Ty>
-	inline typename dynarray<T, 1, _Allocator>::size_type
-		dynarray<T, 1, _Allocator>::expand_list(std::initializer_list<Ty> init)
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::size_type
+	dynarray<T, 1, _Allocator>::expand_list(std::initializer_list<Ty> init)
 	{
 		return init.size();
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline typename dynarray<T, 1, _Allocator>::size_type
-		dynarray<T, 1, _Allocator>::expand_counts(size_type count, Args && ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::size_type
+	dynarray<T, 1, _Allocator>::expand_counts(size_type count, Args && ...args)
 	{
 		return count;
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline typename dynarray<T, 1, _Allocator>::contiguous_allocator_type
-		dynarray<T, 1, _Allocator>::expand_allocator(const allocator_type &_allocator, Args && ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::contiguous_allocator_type
+	dynarray<T, 1, _Allocator>::expand_allocator(const allocator_type &_allocator, Args && ...args)
 	{
 		return _allocator;
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename Skip, typename ...Args>
-	inline typename dynarray<T, 1, _Allocator>::contiguous_allocator_type
-		dynarray<T, 1, _Allocator>::expand_allocators(const Skip &skip, const allocator_type &_allocator, Args && ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::contiguous_allocator_type
+	dynarray<T, 1, _Allocator>::expand_allocators(const Skip &skip, const allocator_type &_allocator, Args && ...args)
 	{
 		return _allocator;
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::initialise(const allocator_type &other_allocator)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::initialise(const allocator_type &other_allocator)
 	{
 		contiguous_allocator = other_allocator;
 		reset();
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::reset()
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::reset()
 	{
 		entire_array_data = nullptr;
 		this_level_array_head = nullptr;
@@ -2046,14 +2136,16 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::verify_size(size_type count)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::verify_size(size_type count)
 	{
 		if (count > static_cast<size_type>(std::numeric_limits<difference_type>::max()))
 			throw std::length_error("array too long");
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::allocate_array(size_type count)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::allocate_array(size_type count)
 	{
 		if (count == 0)
 		{
@@ -2071,7 +2163,7 @@ namespace vla
 	}
 
 	//template<typename T, template<typename U> typename _Allocator>
-	//inline void dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, size_type count)
+	//inline CPP20_DYNARRAY_CONSTEXPR void dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, size_type count)
 	//{
 	//	entire_array_data = nullptr;	// always nullptr in nested-dynarray
 
@@ -2084,7 +2176,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ... Args>
-	inline void dynarray<T, 1, _Allocator>::allocate_array(size_type count, Args&& ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::allocate_array(size_type count, Args&& ...args)
 	{
 		if (count == 0)
 		{
@@ -2104,7 +2197,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ... Args>
-	inline void dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, size_type count, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, size_type count, Args&& ... args)
 	{
 		entire_array_data = nullptr;	// always nullptr in nested-dynarray
 
@@ -2117,7 +2211,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename _Alloc_t, typename, typename ... Args>
-	inline void dynarray<T, 1, _Allocator>::allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::allocate_array(size_type count, _Alloc_t &&other_allocator, Args&& ... args)
 	{
 		if (count == 0)
 		{
@@ -2138,8 +2233,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename _Alloc_t, typename, typename ...Args>
-	inline void dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, size_type count,
-	                                                       _Alloc_t &&other_allocator, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, size_type count, _Alloc_t &&other_allocator, Args&& ... args)
 	{
 		entire_array_data = nullptr;	// always nullptr in nested-dynarray
 		contiguous_allocator = other_allocator;
@@ -2152,7 +2247,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::allocate_array(std::initializer_list<T> input_list)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::allocate_array(std::initializer_list<T> input_list)
 	{
 		size_type count = input_list.size();
 		if (count == 0) return;
@@ -2169,7 +2265,9 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ... Args>
-	inline void dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, std::initializer_list<T> input_list, const allocator_type &other_allocator, Args&& ...args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::allocate_array(pointer starting_address, std::initializer_list<T> input_list,
+	                                           const allocator_type &other_allocator, Args&& ...args)
 	{
 		contiguous_allocator = other_allocator;
 		size_type count = input_list.size();
@@ -2185,7 +2283,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::deallocate_array()
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::deallocate_array()
 	{
 		size_type entire_array_size = static_cast<size_type>(this_level_array_tail - this_level_array_head + 1);
 		if (entire_array_data)
@@ -2198,7 +2297,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::copy_array(const dynarray &other)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::copy_array(const dynarray &other)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		if (entire_array_size == 0) return;
@@ -2214,7 +2314,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline void dynarray<T, 1, _Allocator>::copy_array(const dynarray &other, const allocator_type &other_allocator, Args&&... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::copy_array(const dynarray &other, const allocator_type &other_allocator, Args&&... args)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		if (entire_array_size == 0) return;
@@ -2229,7 +2330,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::copy_array(pointer starting_address, const dynarray & other)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::copy_array(pointer starting_address, const dynarray & other)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		entire_array_data = nullptr;
@@ -2240,8 +2342,8 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename ...Args>
-	inline void dynarray<T, 1, _Allocator>::copy_array(pointer starting_address, const dynarray & other,
-	                                                   const allocator_type &other_allocator, Args&& ... args)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::copy_array(pointer starting_address, const dynarray & other, const allocator_type &other_allocator, Args&& ... args)
 	{
 		size_type entire_array_size = static_cast<size_type>(other.this_level_array_tail - other.this_level_array_head + 1);
 		contiguous_allocator = other_allocator;
@@ -2253,7 +2355,7 @@ namespace vla
 
 	template<typename T, template<typename U> typename _Allocator>
 	template<typename InputIterator>
-	inline void dynarray<T, 1, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
+	inline CPP20_DYNARRAY_CONSTEXPR void dynarray<T, 1, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
 	{
 		static_assert(std::is_same_v<InputIterator, pointer> || std::is_same_v<InputIterator, const_pointer> ||
 		              std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator> ||
@@ -2274,7 +2376,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::loop_copy(const dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::loop_copy(const dynarray &other) noexcept
 	{
 		if (size() == 0 || other.size() == 0) return;
 
@@ -2285,7 +2388,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::loop_copy(std::initializer_list<T> input_list) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::loop_copy(std::initializer_list<T> input_list) noexcept
 	{
 		size_type count = input_list.size();
 		if (size() == 0 || count == 0) return;
@@ -2297,7 +2401,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::move_array(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::move_array(dynarray &other) noexcept
 	{
 		if (other.entire_array_data == nullptr)
 		{
@@ -2325,7 +2430,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::move_values(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::move_values(dynarray &other) noexcept
 	{
 		if (size() == 0 || other.size() == 0) return;
 
@@ -2336,7 +2442,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::swap_all(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::swap_all(dynarray &other) noexcept
 	{
 		std::swap(entire_array_data, other.entire_array_data);
 		std::swap(this_level_array_head, other.this_level_array_head);
@@ -2345,7 +2452,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::swap_outside(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::swap_outside(dynarray &other) noexcept
 	{
 		if (entire_array_data == nullptr || other.entire_array_data == nullptr)
 			swap(other);
@@ -2354,8 +2462,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, 1, _Allocator>::reference
-		dynarray<T, 1, _Allocator>::at(size_type pos)
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::reference
+	dynarray<T, 1, _Allocator>::at(size_type pos)
 	{
 		if (pos >= size())
 			throw std::out_of_range("out of range, incorrect position");
@@ -2363,8 +2471,8 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, 1, _Allocator>::const_reference
-		dynarray<T, 1, _Allocator>::at(size_type pos) const
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::const_reference
+	dynarray<T, 1, _Allocator>::at(size_type pos) const
 	{
 		if (pos >= size())
 			throw std::out_of_range("out of range, incorrect position");
@@ -2372,35 +2480,37 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, 1, _Allocator>::reference
-		dynarray<T, 1, _Allocator>::operator[](size_type pos)
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::reference
+	dynarray<T, 1, _Allocator>::operator[](size_type pos)
 	{
 		return *(this_level_array_head + pos);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline constexpr typename dynarray<T, 1, _Allocator>::const_reference
-		dynarray<T, 1, _Allocator>::operator[](size_type pos) const
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::const_reference
+	dynarray<T, 1, _Allocator>::operator[](size_type pos) const
 	{
 		return *(this_level_array_head + pos);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, 1, _Allocator>::reference
-		dynarray<T, 1, _Allocator>::back()
+	inline CPP20_DYNARRAY_CONSTEXPR typename dynarray<T, 1, _Allocator>::reference
+	dynarray<T, 1, _Allocator>::back()
 	{
 		return *(this_level_array_tail);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline typename dynarray<T, 1, _Allocator>::const_reference
+	inline CPP20_DYNARRAY_CONSTEXPR typename
+	dynarray<T, 1, _Allocator>::const_reference
 		dynarray<T, 1, _Allocator>::back() const
 	{
 		return *(this_level_array_tail);
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::swap(dynarray &other) noexcept
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::swap(dynarray &other) noexcept
 	{
 		difference_type length = std::min<difference_type>(this_level_array_tail - this_level_array_head + 1,
 			other.this_level_array_tail - other.this_level_array_head + 1);
@@ -2409,61 +2519,13 @@ namespace vla
 	}
 
 	template<typename T, template<typename U> typename _Allocator>
-	inline void dynarray<T, 1, _Allocator>::fill(const value_type &value)
+	inline CPP20_DYNARRAY_CONSTEXPR void
+	dynarray<T, 1, _Allocator>::fill(const value_type &value)
 	{
 		for (auto current_address = this_level_array_head;
 			current_address != this_level_array_tail + 1;
 			++current_address)
 			*current_address = value;
-	}
-
-	/*!
-	 * @brief Exchanges the contents of the container with those of other.
-	 *
-	 * If both of the containers are outter-most layer, they will be swapped completely, including sizes.
-	 *
-	 * Otherwise swap the contents only.
-	 *
-	 * @param lhs A dynarray
-	 * @param rhs Another dynarray
-	 * @return
-	*/
-	template<typename T, template<typename U> typename _Allocator>
-	void swap(dynarray<T, 1, _Allocator> &lhs, dynarray<T, 1, _Allocator> &rhs) noexcept
-	{
-		lhs.swap_outside(rhs);
-	}
-
-	/*!
-	 * @brief Replaces old_array with new_array and returns the old value of old_array.
-	 *
-	 * If old_array is an inner layer, exchange() will replaces the contents of the container only, the size of old_array will keeps unchanged.
-	 *
-	 * @param old_array Old array to be replaced
-	 * @param new_array New array replace with
-	 * @return The value of old_array
-	*/
-	template<typename T, template<typename U> typename _Allocator>
-	dynarray<T, 1, _Allocator> exchange(dynarray<T, 1, _Allocator> &old_array, dynarray<T, 1, _Allocator> &&new_array) noexcept
-	{
-		dynarray current_array = std::move(old_array);
-		if (old_array.entire_array_data == nullptr)
-		{
-			old_array.swap(new_array);
-		}
-		else
-		{
-			if (new_array.entire_array_data == nullptr)
-			{
-				dynarray temp_array = std::move(new_array);
-				old_array.swap_all(temp_array);
-			}
-			else
-			{
-				old_array.swap_all(new_array);
-			}
-		}
-		return current_array;
 	}
 
 }	// namespace vla

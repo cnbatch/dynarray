@@ -775,7 +775,7 @@ vla_array_2[0] = vla_array[0];
  * `bool operator<=(const dynarray &lhs, const dynarray &rhs)`
  * `bool operator>(const dynarray &lhs, const dynarray &rhs)`
  * `bool operator>=(const dynarray &lhs, const dynarray &rhs)`
- * `bool operator<=>(const dynarray &lhs, const dynarray &rhs)` (待完成)
+ * `bool operator<=>(const dynarray &lhs, const dynarray &rhs)` (C++20)
 
  * `void swap(dynarray &lhs, dynarray &rhs)`
     - 如果 `lhs` 以及 `rhs` 都是最外层 array，那么该函数会做彻底的交换，就像 `std::swap(std::vector. std::vector)` 那样。

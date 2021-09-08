@@ -791,7 +791,7 @@ vla_array_2[0] = vla_array[0];
  * `bool operator<=(const dynarray &lhs, const dynarray &rhs)`
  * `bool operator>(const dynarray &lhs, const dynarray &rhs)`
  * `bool operator>=(const dynarray &lhs, const dynarray &rhs)`
- * `bool operator<=>(const dynarray &lhs, const dynarray &rhs)` (to be supported)
+ * `bool operator<=>(const dynarray &lhs, const dynarray &rhs)` (C++20)
  
  * `void swap(dynarray &lhs, dynarray &rhs)`
     - If both of `lhs` and `rhs` are array of outermost layer, this function will swap them completely, just like `std::swap(std::vector. std::vector)`.
