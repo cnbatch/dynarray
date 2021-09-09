@@ -739,7 +739,7 @@ vla_array_2[0] = vla_array[0];
 	|**[1][y]**| 1 | 1 | 1 |
 	|**[2][y]**| 1 | 1 | 1 |
 
-	如果需要交换两个 `dynarray`，请使用 `vla::swap()`。
+	如果需要交换两个 `dynarray`，请使用 `swap()`。
 
 11. `fill()`
 

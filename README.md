@@ -753,7 +753,7 @@ vla_array_2[0] = vla_array[0];
 	|**[1][y]**| 1 | 1 | 1 |
 	|**[2][y]**| 1 | 1 | 1 |
 
-	If you want to swap between two `dynarray`, you can use `vla::swap()`.
+	If you want to swap between two `dynarray`, you can use `swap()`.
 
 ***
 
