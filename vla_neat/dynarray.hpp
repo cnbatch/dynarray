@@ -152,7 +152,7 @@ namespace vla
 		bool operator>=(const self_value_type &right_iterator) const noexcept { return dynarray_ptr >= right_iterator.dynarray_ptr; }
 #endif
 
-		friend CPP20_DYNARRAY_CONSTEXPR self_value_type operator+(typename difference_type offset, const self_value_type &other) noexcept { return self_value_type(other) += offset; }
+		friend CPP20_DYNARRAY_CONSTEXPR self_value_type operator+(typename vla_iterator::difference_type offset, const self_value_type &other) noexcept { return self_value_type(other) += offset; }
 
 	private:
 		pointer dynarray_ptr;
