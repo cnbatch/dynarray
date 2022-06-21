@@ -359,7 +359,10 @@ namespace vla
 			if (entire_array_data == nullptr)
 				move_values(other);
 			else
+			{
+				deallocate_array();
 				move_array(other);
+			}
 			return *this;
 		}
 
