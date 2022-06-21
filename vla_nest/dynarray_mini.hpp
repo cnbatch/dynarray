@@ -311,7 +311,10 @@ namespace vla
 		 */
 		dynarray& operator=(dynarray &&other) noexcept
 		{
-			move_values(other);
+			if (entire_array_data == nullptr)
+				move_values(other);
+			else
+				move_array(other);
 			return *this;
 		}
 
