@@ -62,7 +62,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <memory>
 #include <numeric>
-#include <stdexcept>
 #include <type_traits>
 #include <utility>
 
@@ -365,7 +364,10 @@ namespace vla
 		 */
 		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(dynarray &&other) noexcept
 		{
-			move_values(other);
+			if (entire_array_data == nullptr)
+				move_values(other);
+			else
+				move_array(other);
 			return *this;
 		}
 
@@ -1630,7 +1632,10 @@ namespace vla
 		 */
 		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(dynarray &&other) noexcept
 		{
-			move_values(other);
+			if (entire_array_data == nullptr)
+				move_values(other);
+			else
+				move_array(other);
 			return *this;
 		}
 
