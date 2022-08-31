@@ -382,7 +382,7 @@ namespace vla
 		 */
 		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(dynarray &&other) noexcept
 		{
-			if (entire_array_data == nullptr)
+			if (entire_array_data == nullptr && this_level_array_head != nullptr)
 				move_values(other);
 			else
 			{

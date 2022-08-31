@@ -356,7 +356,7 @@ namespace vla
 		 */
 		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(dynarray &&other) noexcept
 		{
-			if (entire_array_data == nullptr)
+			if (current_dimension_array_size != other.current_dimension_array_size)
 				move_values(other);
 			else
 			{
