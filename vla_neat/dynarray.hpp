@@ -1249,8 +1249,7 @@ namespace vla
 	inline CPP20_DYNARRAY_CONSTEXPR void
 	dynarray<T, N, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
 	{
-		static_assert(std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator> ||
-		              std::is_same_v<InputIterator, reverse_iterator> || std::is_same_v<InputIterator, const_reverse_iterator>,
+		static_assert(std::is_same_v<std::decay_t<decltype(*other_begin)>, T>,
 		              "invalid iterator, cannot convert to a valid dynarray");
 
 		size_type count = static_cast<size_type>(std::abs(other_end - other_begin));
@@ -2369,9 +2368,7 @@ namespace vla
 	template<typename InputIterator>
 	inline CPP20_DYNARRAY_CONSTEXPR void dynarray<T, 1, _Allocator>::copy_array(InputIterator other_begin, InputIterator other_end)
 	{
-		static_assert(std::is_same_v<InputIterator, pointer> || std::is_same_v<InputIterator, const_pointer> ||
-		              std::is_same_v<InputIterator, iterator> || std::is_same_v<InputIterator, const_iterator> ||
-		              std::is_same_v<InputIterator, reverse_iterator> || std::is_same_v<InputIterator, const_reverse_iterator>,
+		static_assert(std::is_same_v<std::decay_t<decltype(*other_begin)>, T>,
 		              "invalid iterator, cannot convert to a valid dynarray");
 
 		size_type count = static_cast<size_type>(std::abs(other_end - other_begin));
