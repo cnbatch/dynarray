@@ -485,7 +485,7 @@ namespace vla
 		 * @brief Checks if the container has no elements.
 		 * @return true if the container is empty, false otherwise
 		*/
-		CPP20_DYNARRAY_CONSTEXPR CPP20_DYNARRAY_NODISCARD bool empty() const noexcept { return static_cast<bool>(current_dimension_array_size); }
+		CPP20_DYNARRAY_CONSTEXPR CPP20_DYNARRAY_NODISCARD bool empty() const noexcept { return !static_cast<bool>(size()); }
 
 		/*!
 		 * @brief Returns the number of elements in the container.
