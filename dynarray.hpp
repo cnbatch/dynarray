@@ -751,7 +751,12 @@ namespace vla
 
 		CPP20_DYNARRAY_CONSTEXPR void reset();
 
-		CPP20_DYNARRAY_CONSTEXPR size_type get_block_size() const { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
+		CPP20_DYNARRAY_CONSTEXPR size_type get_block_size() const
+		{
+			if (this_level_array_tail == this_level_array_head)
+				return true;
+			return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1);
+		}
 
 		template<typename Ty>
 		static CPP20_DYNARRAY_CONSTEXPR size_type expand_list(std::initializer_list<Ty> init);

@@ -1784,13 +1784,23 @@ namespace vla
 		 * @brief Checks if the container has no elements.
 		 * @return true if the container is empty, false otherwise
 		*/
-		CPP20_DYNARRAY_CONSTEXPR CPP20_DYNARRAY_NODISCARD bool empty() const noexcept { return static_cast<bool>(this_level_array_tail - this_level_array_head + 1); }
+		CPP20_DYNARRAY_CONSTEXPR CPP20_DYNARRAY_NODISCARD bool empty() const noexcept
+		{
+			if (this_level_array_tail == this_level_array_head)
+				return true;
+			return static_cast<bool>(this_level_array_tail - this_level_array_head + 1);
+		}
 
 		/*!
 		 * @brief Returns the number of elements in the container.
 		 * @return The number of elements in the container.
 		*/
-		CPP20_DYNARRAY_CONSTEXPR size_type size() const noexcept { return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1); }
+		CPP20_DYNARRAY_CONSTEXPR size_type size() const noexcept
+		{
+			if (this_level_array_tail == this_level_array_head)
+				return 0;
+			return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1);
+		}
 
 		/*!
 		 * @brief Returns the maximum number of elements the container is able to hold due to system or library implementation limitations.
