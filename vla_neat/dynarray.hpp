@@ -1317,6 +1317,12 @@ namespace vla
 	inline CPP20_DYNARRAY_CONSTEXPR void
 	dynarray<T, N, _Allocator>::move_array(dynarray &other) noexcept
 	{
+		if (other.empty())
+		{
+			initialise();
+			return;
+		}
+
 		if (other.entire_array_data == nullptr)
 		{
 			initialise();
@@ -1792,7 +1798,7 @@ namespace vla
 		*/
 		CPP20_DYNARRAY_CONSTEXPR size_type size() const noexcept
 		{
-			if (this_level_array_tail == this_level_array_head)
+			if (this_level_array_tail == nullptr && this_level_array_head == nullptr)
 				return 0;
 			return static_cast<size_type>(this_level_array_tail - this_level_array_head + 1);
 		}
@@ -2418,6 +2424,12 @@ namespace vla
 	inline CPP20_DYNARRAY_CONSTEXPR void
 	dynarray<T, 1, _Allocator>::move_array(dynarray &other) noexcept
 	{
+		if (other.empty())
+		{
+			initialise();
+			return;
+		}
+
 		if (other.entire_array_data == nullptr)
 		{
 			initialise();

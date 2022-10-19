@@ -1573,6 +1573,12 @@ namespace vla
 	inline CPP20_DYNARRAY_CONSTEXPR void
 	dynarray<T, _Allocator>::move_array(dynarray &other) noexcept
 	{
+		if (other.empty())
+		{
+			initialise();
+			return;
+		}
+
 		if (other.entire_array_data == nullptr)
 		{
 			initialise();
