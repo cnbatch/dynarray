@@ -1481,7 +1481,7 @@ namespace vla
 		size_type count = static_cast<size_type>(std::abs(other_end - other_begin));
 		if (count == 0) return;
 
-		if constexpr (std::is_same_v<T, internal_value_type>)
+		if constexpr (std::is_same_v<T, internal_value_type> || std::is_convertible_v<T, internal_value_type>)
 		{
 			current_dimension_array_size = count;
 			entire_array_data = current_dimension_array_data = array_allocator.allocate(count);
@@ -1519,7 +1519,10 @@ namespace vla
 		}
 		else
 		{
-			static_assert(std::is_same_v<std::decay_t<decltype(*other_begin)>, T>,
+			static_assert(std::is_same_v<std::is_same_v<T, internal_value_type> ||
+			              std::is_convertible_v<T, internal_value_type> ||
+			              std::is_same_v<InputIterator, iterator> ||
+			              std::is_same_v<InputIterator, const_iterator>,
 			              "invalid iterator, cannot convert to a valid dynarray");
 		}
 	}
