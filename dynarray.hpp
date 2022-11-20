@@ -1519,11 +1519,7 @@ namespace vla
 		}
 		else
 		{
-			static_assert(std::is_same_v<std::is_same_v<T, internal_value_type> ||
-			              std::is_convertible_v<T, internal_value_type> ||
-			              std::is_same_v<InputIterator, iterator> ||
-			              std::is_same_v<InputIterator, const_iterator>,
-			              "invalid iterator, cannot convert to a valid dynarray");
+			static_assert(false, "invalid iterator, cannot convert to a valid dynarray");
 		}
 	}
 

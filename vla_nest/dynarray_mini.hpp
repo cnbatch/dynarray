@@ -315,16 +315,17 @@ namespace vla
 		 * 
 		 * If using operator= in nested dynarray, the original structure will not change. Replace original values only.
 		 * 
+		 * Unless the size of current dynarray is zero.
+		 * 
 		 * @param other The right side of '='
 		 * @return A new dynarray
 		 */
 		CPP20_DYNARRAY_CONSTEXPR dynarray& operator=(dynarray &&other) noexcept
 		{
-			if (current_dimension_array_size != other.current_dimension_array_size)
+			if (current_dimension_array_size > 0 && current_dimension_array_size != other.current_dimension_array_size)
 				move_values(other);
 			else
 			{
-				deallocate_array();
 				move_array(other);
 			}
 			return *this;
