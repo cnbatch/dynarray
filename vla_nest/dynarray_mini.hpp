@@ -52,8 +52,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
 
 #pragma once
-#ifndef _VLA_DYNARRAY_MINI_
-#define _VLA_DYNARRAY_MINI_
+#ifndef _VLA_HEADER_DYNARRAY_MINI_HPP_
+#define _VLA_HEADER_DYNARRAY_MINI_HPP_
 
 #include <algorithm>
 #include <cstdlib>
@@ -1026,4 +1026,4 @@ namespace vla
 }	// namespace vla
 
 
-#endif //_VLA_DYNARRAY_MINI_
+#endif //_VLA_HEADER_DYNARRAY_MINI_HPP_
